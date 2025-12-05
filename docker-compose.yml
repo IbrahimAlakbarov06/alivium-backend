@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: alivium_postgres
+    environment:
+      POSTGRES_DB: alivium_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+    ports:
+      - "5432:5432"
+    volumes:
+      - alivium_pg_data:/var/lib/postgresql/data
+    networks:
+      - alivium-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: alivium_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - alivium-net
+
+  backend:
+    build: .
+    container_name: alivium_backend
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/alivium_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+    ports:
+      - "8080:8080"
+    networks:
+      - alivium-net
+
+volumes:
+  alivium_pg_data:
+
+networks:
+  alivium-net:
