@@ -30,10 +30,6 @@ public class ProductImage {
     private String imageKey;
 
     @Column(nullable = false)
-    @Builder.Default
-    private Integer displayOrder = 0;
-
-    @Column(nullable = false)
     private Boolean isPrimary = false;
 
     @CreationTimestamp
