@@ -35,5 +35,4 @@ public class Voucher {
     private LocalDateTime endDate;
 
     private Boolean active = true;
-
 }
