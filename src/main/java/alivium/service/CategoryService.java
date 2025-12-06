@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +23,6 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
-
 
     @CacheEvict(value = "categories", allEntries = true)
     @Transactional
@@ -56,9 +56,8 @@ public class CategoryService {
         categoryMapper.updateCategoryFromRequest(category, request);
 
         if (request.getParentId() != null) {
-            Category parent =findById(request.getParentId());
-            category.setParent(parent);
-        }else if(request.getParentId() ==null && category.getParent() != null) {
+            category.setParent(findById(request.getParentId()));
+        }else if(request.getParentId() == null) {
             category.setParent(null);
         }
 
@@ -71,8 +70,9 @@ public class CategoryService {
     public MessageResponse deleteCategory(Long id) {
         Category category = findById(id);
 
-        if (!category.getSubCategories().isEmpty()) {
-            throw new AlreadyExistsException("Cannot delete category with sub-categories. Please delete sub-categories first.");
+        List<Category> children = categoryRepository.findActiveSubCategoriesByParentId(id);
+        if (!children.isEmpty()) {
+            throw new AlreadyExistsException("Cannot delete category with sub-categories");
         }
 
         categoryRepository.delete(category);
@@ -82,47 +82,48 @@ public class CategoryService {
     @Cacheable(value = "categories", key = "'all'")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
-        return categoryMapper.toListResponse(categories);
+        return categoryMapper.toListResponseWithChildren(categoryRepository.findAll());
     }
 
     @Cacheable(value = "categories", key = "'active-all'")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAllActiveCategories() {
-        List<Category> categories = categoryRepository.findByActiveTrue();
-        return categoryMapper.toListResponse(categories);
+        return categoryMapper.toListResponseWithChildren(categoryRepository.findByActiveTrue());
     }
 
     @Cacheable(value = "categories", key = "'active-main'")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getActiveMainCategories() {
-        List<Category> mainCategories = categoryRepository.findActiveMainCategories();
-        return categoryMapper.toListResponse(mainCategories);
+        List<Category> allActiveCategories = categoryRepository.findActiveMainCategories();
+
+        return categoryMapper.toSimpleListResponse(allActiveCategories);
     }
 
     @Cacheable(value = "categories", key = "'active-sub-' + #parentId")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getActiveSubCategories(Long parentId) {
         if (!categoryRepository.existsById(parentId)) {
-            throw new NotFoundException("Parent category not found with id: " + parentId);
+            throw new NotFoundException("Parent category not found");
         }
-        List<Category> subCategories = categoryRepository.findActiveSubCategoriesByParentId(parentId);
-        return categoryMapper.toListResponse(subCategories);
+
+        List<Category> allActiveCategories = categoryRepository.findByActiveTrue();
+
+        return categoryMapper.toSubCategoriesResponseWithChildren(parentId, allActiveCategories);
     }
 
     @Cacheable(value = "categories", key = "#id")
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long id) {
         Category category = findById(id);
-        return categoryMapper.toResponse(category);
+        return categoryMapper.toResponseWithChildren(category, categoryRepository.findAll());
     }
 
     @Cacheable(value = "categories", key = "'name-' + #name")
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryByName(String name) {
         Category category = categoryRepository.findByName(name)
-                .orElseThrow(() -> new NotFoundException("Category not found with name: " + name));
-        return categoryMapper.toResponse(category);
+                .orElseThrow(() -> new NotFoundException("Category not found: " + name));
+        return categoryMapper.toResponseWithChildren(category, categoryRepository.findAll());
     }
 
     @CacheEvict(value = "categories", allEntries = true)
@@ -130,12 +131,11 @@ public class CategoryService {
     public CategoryResponse toggleCategoryStatus(Long id) {
         Category category = findById(id);
         category.setActive(!category.getActive());
-        Category updated = categoryRepository.save(category);
-        return categoryMapper.toResponse(updated);
+        return categoryMapper.toResponse(categoryRepository.save(category));
     }
 
     private Category findById(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Category not found: " + id));
     }
 }
