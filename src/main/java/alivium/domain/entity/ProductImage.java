@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -24,6 +27,14 @@ public class ProductImage {
     @Column(nullable = false)
     private String imageUrl;
 
+//    Şəkillərin sıralanması üçün (UI-də 1-ci şəkil əsas olur)->olsun ya menasizdi??
+//    @Column(nullable = false)
+//    @Builder.Default
+//    private Integer displayOrder = 0;
+
     @Column(nullable = false)
     private Boolean isPrimary = false;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 }

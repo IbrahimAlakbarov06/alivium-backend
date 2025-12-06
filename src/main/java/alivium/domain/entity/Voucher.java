@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -16,4 +18,25 @@ public class Voucher {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String code;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private Double discountPercentage;
+
+    private LocalDateTime validFrom;
+
+    private LocalDateTime validUntil;
+
+    @Column(nullable = false)
+    private LocalDateTime startDate;
+
+    @Column(nullable = false)
+    private LocalDateTime endDate;
+
+    private Boolean active = true;
+
 }
