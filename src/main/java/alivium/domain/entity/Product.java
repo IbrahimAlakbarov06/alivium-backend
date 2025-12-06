@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,22 +29,18 @@ public class Product {
 
     private String description;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    private BigDecimal discountPrice;
+
     @Column(nullable = false)
-    private Double price;
+    @Builder.Default
+    private Double averageRating = 0.0;
 
-
-//    bunlari emin deyilem olsun ya yox
-//
-//    private Double salePrice;
-//
-    //  Rating sistemi üçün (UI-də ulduzlar)->bu bizlikdirmi bilmirem.reviews hissesidir
-//    @Column(nullable = false)
-//    @Builder.Default
-//    private Double averageRating = 0.0;
-//
-//    @Column(nullable = false)
-//    @Builder.Default
-//    private Integer reviewCount = 0;
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer reviewCount = 0;
 
     @Column(nullable = false)
     private Boolean active = true;

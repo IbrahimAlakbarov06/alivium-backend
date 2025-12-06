@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,15 +27,18 @@ public class ProductVariant {
     private String size;
 
     @Column(nullable = false)
-    private Integer stock;
+    private Integer stockQuantity;
+
+    @Column(nullable = false,unique = true)
+    private String sku;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal additionalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id",nullable = false)
     private Product product;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @Column(nullable = false)
+    private Boolean available = true;
 }

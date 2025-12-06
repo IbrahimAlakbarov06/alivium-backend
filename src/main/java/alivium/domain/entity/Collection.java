@@ -1,5 +1,6 @@
 package alivium.domain.entity;
 
+import alivium.model.enums.CollectionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,9 +27,8 @@ public class Collection {
 
     private String description;
 
-//    Collection növü (TRENDING, NEW_ARRIVALS,SEASONAL, EDITOR_PICKS)->olsun bu?
-//    @Enumerated(EnumType.STRING)
-//    private CollectionType type;
+    @Enumerated(EnumType.STRING)
+    private CollectionType type;
 
     @ManyToMany(mappedBy = "collections")
     private Set<Product> products = new HashSet<>();

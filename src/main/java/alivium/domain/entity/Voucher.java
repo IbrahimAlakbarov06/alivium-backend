@@ -23,13 +23,10 @@ public class Voucher {
 
     @Column(nullable = false)
     private String title;
+    private String description;
 
     @Column(nullable = false)
     private Double discountPercentage;
-
-    private LocalDateTime validFrom;
-
-    private LocalDateTime validUntil;
 
     @Column(nullable = false)
     private LocalDateTime startDate;

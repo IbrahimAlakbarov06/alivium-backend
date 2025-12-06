@@ -27,10 +27,11 @@ public class ProductImage {
     @Column(nullable = false)
     private String imageUrl;
 
-//    Şəkillərin sıralanması üçün (UI-də 1-ci şəkil əsas olur)->olsun ya menasizdi??
-//    @Column(nullable = false)
-//    @Builder.Default
-//    private Integer displayOrder = 0;
+    private String imageKey;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer displayOrder = 0;
 
     @Column(nullable = false)
     private Boolean isPrimary = false;
