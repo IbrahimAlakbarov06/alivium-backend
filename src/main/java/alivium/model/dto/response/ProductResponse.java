@@ -22,8 +22,8 @@ public class ProductResponse {
     private Double averageRating;
     private Integer reviewCount;
     private Boolean active;
-    private Set<CategoryResponse> categories;
-    private Set<CollectionResponse> collections;
+    private Set<ProductCategoryResponse> categories;
+    private Set<ProductCollectionResponse> collections;
     private Set<ProductVariantResponse> variants;
     private Set<ProductImageResponse> images;
     private LocalDateTime createdAt;
