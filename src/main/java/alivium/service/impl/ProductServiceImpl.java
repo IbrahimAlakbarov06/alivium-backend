@@ -1,0 +1,188 @@
+package alivium.service.impl;
+
+import alivium.domain.entity.Category;
+import alivium.domain.entity.Collection;
+import alivium.domain.entity.Product;
+import alivium.domain.entity.ProductVariant;
+import alivium.domain.repository.CategoryRepository;
+import alivium.domain.repository.CollectionRepository;
+import alivium.domain.repository.ProductRepository;
+import alivium.exception.AlreadyExistsException;
+import alivium.exception.NotFoundException;
+import alivium.mapper.ProductMapper;
+import alivium.mapper.ProductVariantMapper;
+import alivium.model.dto.request.ProductCreateRequest;
+import alivium.model.dto.request.ProductUpdateRequest;
+import alivium.model.dto.response.ProductResponse;
+import alivium.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ProductServiceImpl implements ProductService {
+    private final ProductRepository productRepository;
+    private final ProductMapper productMapper;
+    private final CategoryRepository categoryRepository;
+    private final CollectionRepository collectionRepository;
+    private final ProductVariantMapper productVariantMapper;
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
+    public ProductResponse createProduct(ProductCreateRequest request) {
+        if(productRepository.existsByName(request.getName())){
+            throw new AlreadyExistsException("Product already exists with name: "+request.getName());
+        }
+        if (request.getDiscountPrice() != null && request.getDiscountPrice().compareTo(request.getPrice()) > 0) {
+            throw new IllegalArgumentException("Discount price cannot be greater than the original price");
+        }
+
+        Product product=productMapper.toEntity(request);
+        setProductRelationsFromRequest(request,product);
+
+        Product savedProduct=productRepository.save(product);
+        return productMapper.toResponse(savedProduct);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", key = "#productId")
+    public ProductResponse updateProduct(Long productId, ProductUpdateRequest request) {
+        Product product=findById(productId);
+
+        if(request.getDiscountPrice()!=null && request.getDiscountPrice().compareTo(product.getPrice())>0){
+            throw new IllegalArgumentException("Discount price cannot be greater than the original price");
+        }
+        productMapper.updateEntityFromDto(request,product);
+
+        Product updatedProduct = productRepository.save(product);
+        return productMapper.toResponse(updatedProduct);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", key = "#productId")
+    public void deleteProduct(Long productId) {
+        Product product = findById(productId);
+
+        productRepository.delete(product);
+    }
+
+    @Override
+    @Cacheable(value = "products")
+    public List<ProductResponse> getAllProducts() {
+        return productRepository.findAll().stream()
+                .map(productMapper::toResponse).toList();
+    }
+
+    @Override
+    @Cacheable(value = "products", key = "#productId")
+    public ProductResponse getProductById(Long productId) {
+        Product product =findById(productId);
+        return productMapper.toResponse(product);
+    }
+
+    @Override
+    @Cacheable(value = "products", key = "'active'")
+    public List<ProductResponse> getActiveProducts() {
+        return productRepository.findAllByActiveTrue().stream()
+                .map(productMapper::toResponse).toList();
+    }
+
+    @Override
+    @Cacheable(value = "products", key = "'category:' + #categoryId")
+    public List<ProductResponse> getProductsByCategoryId(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not found with id: " + categoryId));
+
+        List<Product> products = productRepository.findByCategoriesContainingAndActiveTrue(category);
+        return products.stream()
+                .map(productMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Cacheable(value = "products", key = "'collection:' + #collectionId")
+    public List<ProductResponse> getProductsByCollectionId(Long collectionId) {
+        Collection collection = collectionRepository.findById(collectionId)
+                .orElseThrow(() -> new NotFoundException("Collection not found with id: " + collectionId));
+
+        List<Product> products = productRepository.findByCollectionsContainingAndActiveTrue(collection);
+        return products.stream()
+                .map(productMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", key = "#productId")
+    public ProductResponse updateProductDiscountPrice(Long productId, BigDecimal discountPrice) {
+        Product product = findById(productId);
+
+        if (discountPrice != null) {
+            if (discountPrice.compareTo(product.getPrice()) > 0) {
+                throw new IllegalArgumentException("Discount price cannot be greater than the original price");
+            }
+        }
+
+        product.setDiscountPrice(discountPrice);
+        Product updatedProduct = productRepository.save(product);
+
+        return productMapper.toResponse(updatedProduct);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", key = "#productId")
+    public ProductResponse switchProductStatus(Long productId) {
+        Product product = findById(productId);
+        product.setActive(!product.getActive());
+
+        Product updatedProduct = productRepository.save(product);
+        return productMapper.toResponse(updatedProduct);
+    }
+
+    //helper
+    public void setProductRelationsFromRequest(ProductCreateRequest request, Product product) {
+        if (request.getCategoryIds() != null) {
+            Set<Category> categories = request.getCategoryIds().stream()
+                    .map(id -> categoryRepository.findById(id)
+                            .orElseThrow(() -> new NotFoundException("Category not found with id: " + id)))
+                    .collect(Collectors.toSet());
+            product.setCategories(categories);
+        }
+
+        if (request.getCollectionIds() != null) {
+            Set<Collection> collections = request.getCollectionIds().stream()
+                    .map(id -> collectionRepository.findById(id)
+                            .orElseThrow(() -> new NotFoundException("Collection not found with id: " + id)))
+                    .collect(Collectors.toSet());
+            product.setCollections(collections);
+        }
+
+        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
+            Set<ProductVariant> variants = request.getVariants().stream()
+                    .map(productVariantMapper::toEntity)
+                    .collect(Collectors.toSet());
+
+            product.getVariants().clear();
+            product.getVariants().addAll(variants);
+            variants.forEach(v -> v.setProduct(product));
+        }
+    }
+
+    private Product findById(Long id){
+        return productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+    }
+
+}
