@@ -1,36 +1,49 @@
 package alivium.mapper;
 
-
-import alivium.domain.entity.*;
+import alivium.domain.entity.Category;
+import alivium.domain.entity.Collection;
+import alivium.domain.entity.Product;
+import alivium.domain.entity.ProductVariant;
+import alivium.domain.repository.CategoryRepository;
+import alivium.domain.repository.CollectionRepository;
+import alivium.exception.NotFoundException;
 import alivium.model.dto.request.ProductCreateRequest;
 import alivium.model.dto.request.ProductUpdateRequest;
-import alivium.model.dto.response.*;
+import alivium.model.dto.response.ProductCategoryResponse;
+import alivium.model.dto.response.ProductCollectionResponse;
+import alivium.model.dto.response.ProductResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class ProductMapper {
+
+    private final ProductVariantMapper productVariantMapper;
+    private final CategoryRepository categoryRepository;
+    private final CollectionRepository collectionRepository;
 
     public Product toEntity(ProductCreateRequest request) {
         if (request == null) {
             return null;
         }
 
-        Product product =  Product.builder()
+        Product product = Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .discountPrice(request.getDiscountPrice())
-                .active(request.getActive()!=null? request.getActive():false)
+                .active(request.getActive() != null ? request.getActive() : false)
                 .build();
 
-        product.setCategories(Collections.emptySet());
-        product.setCollections(Collections.emptySet());
-        product.setVariants(Collections.emptySet());
-        product.setImages(Collections.emptySet());
+        product.setCategories(new HashSet<>());
+        product.setCollections(new HashSet<>());
+        product.setVariants(new HashSet<>());
+        product.setImages(new HashSet<>());
 
         return product;
     }
@@ -51,8 +64,10 @@ public class ProductMapper {
                 .active(product.getActive())
                 .categories(mapCategories(product.getCategories()))
                 .collections(mapCollections(product.getCollections()))
-                .variants(mapVariants(product.getVariants()))
-                .images(mapImages(product.getImages()))
+                .variants(product.getVariants().stream()
+                        .map(productVariantMapper::toResponse)
+                        .collect(Collectors.toSet()))
+                .images(new HashSet<>())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
@@ -68,9 +83,40 @@ public class ProductMapper {
         if (request.getActive() != null) product.setActive(request.getActive());
     }
 
-    //helper
+    public void setProductRelationsFromRequest(ProductCreateRequest request, Product product) {
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            Set<Category> categories = request.getCategoryIds().stream()
+                    .map(id -> categoryRepository.findById(id)
+                            .orElseThrow(() -> new NotFoundException("Category not found with id: " + id)))
+                    .collect(Collectors.toSet());
+            product.setCategories(categories);
+        }
+
+        if (request.getCollectionIds() != null && !request.getCollectionIds().isEmpty()) {
+            Set<Collection> collections = request.getCollectionIds().stream()
+                    .map(id -> collectionRepository.findById(id)
+                            .orElseThrow(() -> new NotFoundException("Collection not found with id: " + id)))
+                    .collect(Collectors.toSet());
+            product.setCollections(collections);
+        }
+
+        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
+            Set<ProductVariant> variants = request.getVariants().stream()
+                    .map(variantRequest -> {
+                        ProductVariant variant = productVariantMapper.toEntity(variantRequest);
+                        variant.setProduct(product);
+                        return variant;
+                    })
+                    .collect(Collectors.toSet());
+
+            product.getVariants().addAll(variants);
+        }
+    }
+
     private Set<ProductCategoryResponse> mapCategories(Set<Category> categories) {
-        if (categories == null) return Collections.emptySet();
+        if (categories == null || categories.isEmpty()) {
+            return new HashSet<>();
+        }
         return categories.stream()
                 .map(c -> ProductCategoryResponse.builder()
                         .id(c.getId())
@@ -79,9 +125,10 @@ public class ProductMapper {
                 .collect(Collectors.toSet());
     }
 
-    //helper
     private Set<ProductCollectionResponse> mapCollections(Set<Collection> collections) {
-        if (collections == null) return Collections.emptySet();
+        if (collections == null || collections.isEmpty()) {
+            return new HashSet<>();
+        }
 
         return collections.stream()
                 .map(c -> ProductCollectionResponse.builder()
@@ -90,31 +137,4 @@ public class ProductMapper {
                         .build())
                 .collect(Collectors.toSet());
     }
-
-    private Set<ProductVariantResponse> mapVariants(Set<ProductVariant> variants) {
-        if (variants == null) return Collections.emptySet();
-        return variants.stream()
-                .map(v -> ProductVariantResponse.builder()
-                        .id(v.getId())
-                        .color(v.getColor())
-                        .size(v.getSize())
-                        .stockQuantity(v.getStockQuantity())
-                        .sku(v.getSku())
-                        .additionalPrice(v.getAdditionalPrice())
-                        .available(v.getAvailable())
-                        .build())
-                .collect(Collectors.toSet());
-    }
-
-    private Set<ProductImageResponse> mapImages(Set<ProductImage> images) {
-        if (images == null) return Collections.emptySet();
-        return images.stream()
-                .map(i -> ProductImageResponse.builder()
-                        .id(i.getId())
-                        .imageUrl(i.getImageUrl())
-                        .build())
-                .collect(Collectors.toSet());
-    }
-
-
 }
