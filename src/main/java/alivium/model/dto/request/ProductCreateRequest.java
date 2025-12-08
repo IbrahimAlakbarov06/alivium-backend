@@ -33,7 +33,7 @@ public class ProductCreateRequest {
     private Boolean active;
 
     private Set<@NotNull(message = "Category id cannot be null") Long> categoryIds;
-    private Set<@NotNull(message = "Collection id cannot be null") Long> collectionIds;
+    private Set<Long> collectionIds;
 
     private Set<@Valid ProductVariantRequest> variants;
 }
