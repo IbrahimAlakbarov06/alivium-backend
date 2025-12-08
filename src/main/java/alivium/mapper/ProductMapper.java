@@ -1,14 +1,10 @@
 package alivium.mapper;
 
 
-import alivium.domain.entity.Category;
-import alivium.domain.entity.Collection;
-import alivium.domain.entity.Product;
+import alivium.domain.entity.*;
 import alivium.model.dto.request.ProductCreateRequest;
 import alivium.model.dto.request.ProductUpdateRequest;
-import alivium.model.dto.response.ProductCategoryResponse;
-import alivium.model.dto.response.ProductCollectionResponse;
-import alivium.model.dto.response.ProductResponse;
+import alivium.model.dto.response.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -55,8 +51,8 @@ public class ProductMapper {
                 .active(product.getActive())
                 .categories(mapCategories(product.getCategories()))
                 .collections(mapCollections(product.getCollections()))
-                .variants(Collections.emptySet())
-                .images(Collections.emptySet())
+                .variants(mapVariants(product.getVariants()))
+                .images(mapImages(product.getImages()))
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
@@ -94,5 +90,31 @@ public class ProductMapper {
                         .build())
                 .collect(Collectors.toSet());
     }
+
+    private Set<ProductVariantResponse> mapVariants(Set<ProductVariant> variants) {
+        if (variants == null) return Collections.emptySet();
+        return variants.stream()
+                .map(v -> ProductVariantResponse.builder()
+                        .id(v.getId())
+                        .color(v.getColor())
+                        .size(v.getSize())
+                        .stockQuantity(v.getStockQuantity())
+                        .sku(v.getSku())
+                        .additionalPrice(v.getAdditionalPrice())
+                        .available(v.getAvailable())
+                        .build())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<ProductImageResponse> mapImages(Set<ProductImage> images) {
+        if (images == null) return Collections.emptySet();
+        return images.stream()
+                .map(i -> ProductImageResponse.builder()
+                        .id(i.getId())
+                        .imageUrl(i.getImageUrl())
+                        .build())
+                .collect(Collectors.toSet());
+    }
+
 
 }

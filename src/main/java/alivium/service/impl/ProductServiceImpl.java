@@ -81,7 +81,7 @@ public class ProductServiceImpl implements ProductService {
     @Cacheable(value = "products")
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
-                .map(productMapper::toResponse).toList();
+                .map(productMapper::toResponse).collect(Collectors.toList());
     }
 
     @Override
@@ -95,7 +95,7 @@ public class ProductServiceImpl implements ProductService {
     @Cacheable(value = "products", key = "'active'")
     public List<ProductResponse> getActiveProducts() {
         return productRepository.findAllByActiveTrue().stream()
-                .map(productMapper::toResponse).toList();
+                .map(productMapper::toResponse).collect(Collectors.toList());
     }
 
     @Override
