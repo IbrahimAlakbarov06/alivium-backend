@@ -3,7 +3,6 @@ package alivium.service.impl;
 import alivium.domain.entity.Category;
 import alivium.domain.entity.Collection;
 import alivium.domain.entity.Product;
-import alivium.domain.entity.ProductVariant;
 import alivium.domain.repository.CategoryRepository;
 import alivium.domain.repository.CollectionRepository;
 import alivium.domain.repository.ProductRepository;
@@ -23,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,7 +45,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product product=productMapper.toEntity(request);
-        setProductRelationsFromRequest(request,product);
+        productMapper.setProductRelationsFromRequest(request,product);
 
         Product savedProduct=productRepository.save(product);
         return productMapper.toResponse(savedProduct);
@@ -78,6 +76,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "products")
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
@@ -85,6 +84,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "#productId")
     public ProductResponse getProductById(Long productId) {
         Product product =findById(productId);
@@ -92,6 +92,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "'active'")
     public List<ProductResponse> getActiveProducts() {
         return productRepository.findAllByActiveTrue().stream()
@@ -99,6 +100,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "'category:' + #categoryId")
     public List<ProductResponse> getProductsByCategoryId(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
@@ -111,6 +113,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "'collection:' + #collectionId")
     public List<ProductResponse> getProductsByCollectionId(Long collectionId) {
         Collection collection = collectionRepository.findById(collectionId)
@@ -149,35 +152,6 @@ public class ProductServiceImpl implements ProductService {
 
         Product updatedProduct = productRepository.save(product);
         return productMapper.toResponse(updatedProduct);
-    }
-
-    //helper
-    public void setProductRelationsFromRequest(ProductCreateRequest request, Product product) {
-        if (request.getCategoryIds() != null) {
-            Set<Category> categories = request.getCategoryIds().stream()
-                    .map(id -> categoryRepository.findById(id)
-                            .orElseThrow(() -> new NotFoundException("Category not found with id: " + id)))
-                    .collect(Collectors.toSet());
-            product.setCategories(categories);
-        }
-
-        if (request.getCollectionIds() != null) {
-            Set<Collection> collections = request.getCollectionIds().stream()
-                    .map(id -> collectionRepository.findById(id)
-                            .orElseThrow(() -> new NotFoundException("Collection not found with id: " + id)))
-                    .collect(Collectors.toSet());
-            product.setCollections(collections);
-        }
-
-        if (request.getVariants() != null && !request.getVariants().isEmpty()) {
-            Set<ProductVariant> variants = request.getVariants().stream()
-                    .map(productVariantMapper::toEntity)
-                    .collect(Collectors.toSet());
-
-            product.getVariants().clear();
-            product.getVariants().addAll(variants);
-            variants.forEach(v -> v.setProduct(product));
-        }
     }
 
     private Product findById(Long id){
