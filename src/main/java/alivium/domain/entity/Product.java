@@ -73,6 +73,10 @@ public class Product {
     @JsonIgnore
     private Set<Collection> collections = new HashSet<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Review> reviews = new HashSet<>();
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
