@@ -31,7 +31,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final CategoryRepository categoryRepository;
     private final CollectionRepository collectionRepository;
-    private final ProductVariantMapper productVariantMapper;
 
     @Override
     @Transactional
@@ -53,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "products", key = "#productId")
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse updateProduct(Long productId, ProductUpdateRequest request) {
         Product product=findById(productId);
 
@@ -77,10 +76,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "products")
+    @Cacheable(value = "products", key = "'all'")
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
-                .map(productMapper::toResponse).toList();
+                .map(productMapper::toResponse).collect(Collectors.toList());
     }
 
     @Override
@@ -96,7 +95,7 @@ public class ProductServiceImpl implements ProductService {
     @Cacheable(value = "products", key = "'active'")
     public List<ProductResponse> getActiveProducts() {
         return productRepository.findAllByActiveTrue().stream()
-                .map(productMapper::toResponse).toList();
+                .map(productMapper::toResponse).collect(Collectors.toList());
     }
 
     @Override
