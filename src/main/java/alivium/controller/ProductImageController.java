@@ -47,7 +47,7 @@ public class ProductImageController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<ProductImageResponse> uploadImage(@Valid @ModelAttribute ProductImageRequest request) {
+    public ResponseEntity<ProductImageResponse> uploadImage(@Valid ProductImageRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(productImageService.uploadProductImage(request));
     }
