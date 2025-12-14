@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -18,11 +19,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByProductIdAndRatingAndActiveTrue(Long productId, Integer rating);
 
-    @Query("select avg(r) from Review r where r.product.id= :productId and r.active=true")
+    @Query("select avg(r.rating) from Review r where r.product.id= :productId and r.active=true")
     Double calculateRating(Long productId);
 
     @Query("select count(r) from Review r where r.product.id =:productId and r.active=true")
     Long countByProductId(Long productId);
 
+    @Query("SELECT r FROM Review r LEFT JOIN FETCH r.images WHERE r.id = :reviewId")
+    Optional<Review> findByIdWithImages(Long reviewId);
 
 }
