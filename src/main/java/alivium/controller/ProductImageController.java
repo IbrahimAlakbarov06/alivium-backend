@@ -7,7 +7,9 @@ import alivium.service.ProductImageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -41,7 +43,9 @@ public class ProductImageController {
         InputStream inputStream = productImageService.downloadProductImage(imageId);
 
         return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=\"" + image.getImageKey() + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + image.getImageKey() + "\"")
                 .body(new InputStreamResource(inputStream));
     }
 

@@ -11,7 +11,9 @@ import alivium.model.dto.request.ProductImageRequest;
 import alivium.model.dto.response.ProductImageResponse;
 import alivium.service.MinioService;
 import alivium.service.ProductImageService;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -31,10 +33,12 @@ public class ProductImageServiceImpl implements ProductImageService {
     private final MinioProperties minioProperties;
     private final ProductRepository productRepository;
     private final ProductImageMapper productImageMapper;
+    private final CacheManager cacheManager;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
-    @CacheEvict(value = "productImages", key = "#request.productId")
+    @CacheEvict(value = {"productImages", "products"}, allEntries = true)
     public ProductImageResponse uploadProductImage(ProductImageRequest request) {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
@@ -44,14 +48,15 @@ public class ProductImageServiceImpl implements ProductImageService {
 
         ProductImage image = productImageMapper.toEntity(request, product);
         image.setImageKey(key);
-        image.setImageUrl(url);
         ProductImage saved = pimRepo.save(image);
+
+        saved.setImageUrl(url);
         return productImageMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "productImages", allEntries = true)
+    @CacheEvict(value = {"productImages", "products"}, allEntries = true)
     public void deleteProductImage(Long imageId) {
         ProductImage productImage = findById(imageId);
         deleteFileFromStorage(productImage);
@@ -67,8 +72,15 @@ public class ProductImageServiceImpl implements ProductImageService {
     @Override
     @Cacheable(value = "productImages", key = "#productId")
     public List<ProductImageResponse> getProductImagesByProductId(Long productId) {
+       productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " +productId));
         List<ProductImage> productImageList = pimRepo.findByProductId(productId);
-        return productImageList.stream().map(productImageMapper::toResponse).collect(Collectors.toList());
+        return productImageList.stream()
+                .map(img -> {
+                    img.setImageUrl(minioService.getPreSignedUrl(productBucket(), img.getImageKey(), 3600));
+                    return productImageMapper.toResponse(img);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -79,6 +91,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         Long productId=productImage.getProduct().getId();
 
         pimRepo.clearPrimaryImages(productId);
+        entityManager.refresh(productImage);
         productImage.setIsPrimary(true);
         ProductImage saved = pimRepo.save(productImage);
 
@@ -94,7 +107,6 @@ public class ProductImageServiceImpl implements ProductImageService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "productImages", key = "#imageId")
     public ProductImageResponse updateProductImage(Long imageId, MultipartFile newFile) {
         ProductImage existing = findById(imageId);
 
@@ -103,9 +115,12 @@ public class ProductImageServiceImpl implements ProductImageService {
         String url = minioService.getPreSignedUrl(productBucket(), key, 3600);
 
         existing.setImageKey(key);
-        existing.setImageUrl(url);
-
         ProductImage saved = pimRepo.save(existing);
+        saved.setImageUrl(url);
+
+        Long productId = existing.getProduct().getId();
+        cacheManager.getCache("productImages").evict(productId);
+
         return productImageMapper.toResponse(saved);
     }
 
