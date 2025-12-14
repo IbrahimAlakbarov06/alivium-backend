@@ -1,9 +1,6 @@
 package alivium.mapper;
 
-import alivium.domain.entity.Category;
-import alivium.domain.entity.Collection;
-import alivium.domain.entity.Product;
-import alivium.domain.entity.ProductVariant;
+import alivium.domain.entity.*;
 import alivium.domain.repository.CategoryRepository;
 import alivium.domain.repository.CollectionRepository;
 import alivium.exception.NotFoundException;
@@ -11,6 +8,7 @@ import alivium.model.dto.request.ProductCreateRequest;
 import alivium.model.dto.request.ProductUpdateRequest;
 import alivium.model.dto.response.ProductCategoryResponse;
 import alivium.model.dto.response.ProductCollectionResponse;
+import alivium.model.dto.response.ProductImageMinimalResponse;
 import alivium.model.dto.response.ProductResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -67,7 +65,7 @@ public class ProductMapper {
                 .variants(product.getVariants().stream()
                         .map(productVariantMapper::toResponse)
                         .collect(Collectors.toSet()))
-                .images(new HashSet<>())
+                .images(mapProductImage(product.getImages()))
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
@@ -134,6 +132,19 @@ public class ProductMapper {
                 .map(c -> ProductCollectionResponse.builder()
                         .id(c.getId())
                         .name(c.getName())
+                        .build())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<ProductImageMinimalResponse> mapProductImage(Set<ProductImage> productImages){
+        if(productImages==null || productImages.isEmpty()){
+            return new HashSet<>();
+        }
+
+        return productImages.stream()
+                .map(i-> ProductImageMinimalResponse.builder()
+                        .imageKey(i.getImageKey())
+                        .id(i.getId())
                         .build())
                 .collect(Collectors.toSet());
     }

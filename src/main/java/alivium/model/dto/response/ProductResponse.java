@@ -25,7 +25,7 @@ public class ProductResponse {
     private Set<ProductCategoryResponse> categories;
     private Set<ProductCollectionResponse> collections;
     private Set<ProductVariantResponse> variants;
-    private Set<ProductImageResponse> images;
+    private Set<ProductImageMinimalResponse> images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

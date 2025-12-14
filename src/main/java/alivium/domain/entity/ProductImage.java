@@ -24,7 +24,7 @@ public class ProductImage {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(nullable = false)
+    @Transient
     private String imageUrl;
 
     private String imageKey;
