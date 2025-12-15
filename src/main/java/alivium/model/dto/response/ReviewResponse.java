@@ -23,6 +23,8 @@ public class ReviewResponse {
     private String productName;
     private Integer rating;
     private String comment;
+    private Boolean verified;
+    private Boolean active;
     private List<ReviewImageResponse> images;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

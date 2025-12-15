@@ -23,7 +23,7 @@ public class ReviewImage {
     @JoinColumn(name = "review_id", nullable = false)
     private Review review;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String imageUrl;
 
     @Column(nullable = false)
