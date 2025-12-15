@@ -3,10 +3,12 @@ package alivium.mapper;
 import alivium.domain.entity.Review;
 import alivium.model.dto.request.ReviewRequest;
 import alivium.model.dto.request.ReviewUpdateRequest;
+import alivium.model.dto.response.ProductRatingResponse;
 import alivium.model.dto.response.ReviewImageResponse;
 import alivium.model.dto.response.ReviewResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,20 +23,23 @@ public class ReviewMapper {
                 .comment(request.getComment())
                 .active(true)
                 .verified(false)
+                .images(Collections.emptySet())
                 .build();
     }
 
     public ReviewResponse toResponse(Review review){
         if (review == null) return null;
 
-        List<ReviewImageResponse> images = review.getImages().stream()
+        List<ReviewImageResponse> images = (review.getImages() != null)
+                ? review.getImages().stream()
                 .map(img -> ReviewImageResponse.builder()
                         .id(img.getId())
                         .imageUrl(img.getImageUrl())
                         .imageKey(img.getImageKey())
                         .createdAt(img.getCreatedAt())
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+                : Collections.emptyList();
 
         return ReviewResponse.builder()
                 .id(review.getId())
@@ -45,7 +50,11 @@ public class ReviewMapper {
                 .productName(review.getProduct().getName())
                 .rating(review.getRating())
                 .comment(review.getComment())
+                .verified(review.getVerified())
+                .active(review.getActive())
                 .images(images)
+                .createdAt(review.getCreatedAt())
+                .updatedAt(review.getUpdatedAt())
                 .build();
     }
 
@@ -54,7 +63,29 @@ public class ReviewMapper {
         if (request.getComment() != null) review.setComment(request.getComment());
     }
 
+    public ProductRatingResponse toRatingResponse(Long productId,
+                                                  Double averageRating,
+                                                  Long totalReviews,
+                                                  Long fiveStar,
+                                                  Long fourStar,
+                                                  Long threeStar,
+                                                  Long twoStar,
+                                                  Long oneStar) {
+        return ProductRatingResponse.builder()
+                .productId(productId)
+                .averageRating(averageRating != null ? averageRating : 0.0)
+                .totalReviews(totalReviews)
+                .fiveStarCount(fiveStar)
+                .fourStarCount(fourStar)
+                .threeStarCount(threeStar)
+                .twoStarCount(twoStar)
+                .oneStarCount(oneStar)
+                .build();
+    }
+
     public List<ReviewResponse> toListResponse(List<Review> reviews){
+        if (reviews == null) return Collections.emptyList();
+
         return reviews.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
