@@ -37,8 +37,8 @@ public class ProductImageServiceImpl implements ProductImageService {
     @Transactional
     public String getValidImageUrl(ProductImage productImage){
         if(productImage.getImageUrl()==null
-                || productImage.getImageUrlExpiry().isBefore(LocalDateTime.now())
-                || productImage.getImageUrlExpiry()==null){
+                || productImage.getImageUrlExpiry()==null
+                || productImage.getImageUrlExpiry().isBefore(LocalDateTime.now())){
             String newUrl=minioService.getPreSignedUrl(productBucket(),productImage.getImageKey(),3600);
             productImage.setImageUrl(newUrl);
             LocalDateTime newExpiry=LocalDateTime.now().plusSeconds(3600);
@@ -132,7 +132,7 @@ public class ProductImageServiceImpl implements ProductImageService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "productImages", key = "#existing.productId")
+    @CacheEvict(value = "productImages",allEntries = true)
     public ProductImageResponse updateProductImage(Long imageId, MultipartFile newFile) {
         ProductImage existing = findById(imageId);
 
@@ -143,7 +143,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         existing.setImageUrl(null);
         existing.setImageUrlExpiry(null);
 
-        existing.setImageUrl(getValidImageUrl(existing));
+        existing.setImageUrl(minioService.getPreSignedUrl(productBucket(), key, 3600));
         ProductImage saved = pimRepo.save(existing);
 
         return productImageMapper.toResponse(saved);
