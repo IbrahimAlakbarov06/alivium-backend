@@ -3,6 +3,7 @@ package alivium.controller;
 import alivium.model.dto.request.AddressRequest;
 import alivium.model.dto.request.AddressTypeRequest;
 import alivium.model.dto.response.AddressResponse;
+import alivium.service.AddressService;
 import alivium.service.impl.AddressServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ import java.util.List;
 @Validated
 public class AddressController {
 
-    private final AddressServiceImpl addressService;
+    private final AddressService addressService;
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('ADMIN_ROLE') or #userId == authentication.principal.id")

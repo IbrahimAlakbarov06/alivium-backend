@@ -1,4 +1,4 @@
-package alivium.service;
+package alivium.service.impl;
 
 import alivium.config.MinioProperties;
 import alivium.domain.entity.Review;
@@ -9,6 +9,7 @@ import alivium.exception.BusinessException;
 import alivium.exception.NotFoundException;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ReviewImageResponse;
+import alivium.service.MinioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ReviewImageService {
+public class ReviewImageServiceImpl {
 
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewRepository reviewRepository;

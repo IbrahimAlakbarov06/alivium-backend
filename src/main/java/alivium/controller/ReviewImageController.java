@@ -3,7 +3,7 @@ package alivium.controller;
 import alivium.domain.entity.User;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ReviewImageResponse;
-import alivium.service.ReviewImageService;
+import alivium.service.impl.ReviewImageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ import java.util.List;
 @Validated
 public class ReviewImageController {
 
-    private final ReviewImageService reviewImageService;
+    private final ReviewImageServiceImpl reviewImageService;
 
     @PostMapping("/upload")
     public ResponseEntity<ReviewImageResponse> uploadReviewImage(

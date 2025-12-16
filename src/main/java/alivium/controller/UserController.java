@@ -6,6 +6,7 @@ import alivium.model.dto.response.UserResponse;
 import alivium.model.enums.UserRole;
 import alivium.model.enums.UserStatus;
 import alivium.service.UserService;
+import alivium.service.impl.UserServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

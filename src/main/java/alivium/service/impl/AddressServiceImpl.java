@@ -9,7 +9,6 @@ import alivium.model.dto.request.AddressRequest;
 import alivium.model.dto.request.AddressTypeRequest;
 import alivium.model.dto.response.AddressResponse;
 import alivium.service.AddressService;
-import alivium.service.UserService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,7 @@ import java.util.List;
 @Slf4j
 public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
-    private final UserService userService;
+    private final UserServiceImpl userService;
     private final AddressMapper addressMapper;
 
 

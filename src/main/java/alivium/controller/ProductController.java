@@ -3,6 +3,7 @@ package alivium.controller;
 import alivium.model.dto.request.ProductCreateRequest;
 import alivium.model.dto.request.ProductUpdateRequest;
 import alivium.model.dto.response.ProductResponse;
+import alivium.service.ProductService;
 import alivium.service.impl.ProductServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ import java.util.List;
 @Validated
 public class ProductController {
 
-    private final ProductServiceImpl productService;
+    private final ProductService productService;
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {

@@ -4,6 +4,7 @@ import alivium.model.dto.request.CollectionRequest;
 import alivium.model.dto.response.CollectionResponse;
 import alivium.model.enums.CollectionType;
 import alivium.service.CollectionService;
+import alivium.service.impl.CollectionServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
