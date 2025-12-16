@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class ProductImageMinimalResponse {
     private Long id;
     private String imageKey;
+    private String imageUrl;
 }

@@ -145,6 +145,7 @@ public class ProductMapper {
                 .map(i-> ProductImageMinimalResponse.builder()
                         .imageKey(i.getImageKey())
                         .id(i.getId())
+                        .imageUrl(i.getImageUrl())
                         .build())
                 .collect(Collectors.toSet());
     }

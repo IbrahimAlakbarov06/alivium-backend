@@ -24,8 +24,10 @@ public class ProductImage {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Transient
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
+
+    private LocalDateTime imageUrlExpiry;
 
     private String imageKey;
 

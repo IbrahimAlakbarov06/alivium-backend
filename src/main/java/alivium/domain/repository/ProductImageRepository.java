@@ -13,7 +13,7 @@ import java.util.List;
 public interface ProductImageRepository extends JpaRepository<ProductImage, Long> {
     List<ProductImage> findByProductId(Long productId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true,flushAutomatically = true)
     @Query("UPDATE ProductImage p SET p.isPrimary = false WHERE p.product.id = :productId")
     void clearPrimaryImages(Long productId);
 }
