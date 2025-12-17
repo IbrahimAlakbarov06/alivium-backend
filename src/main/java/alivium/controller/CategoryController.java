@@ -3,6 +3,7 @@ package alivium.controller;
 import alivium.model.dto.request.CategoryRequest;
 import alivium.model.dto.response.CategoryResponse;
 import alivium.service.CategoryService;
+import alivium.service.impl.CategoryServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

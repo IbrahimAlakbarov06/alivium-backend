@@ -4,11 +4,9 @@ import alivium.domain.entity.Product;
 import alivium.domain.entity.ProductImage;
 import alivium.model.dto.request.ProductImageRequest;
 import alivium.model.dto.response.ProductImageResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class ProductImageMapper {
 
     public ProductImage toEntity(ProductImageRequest request, Product product) {

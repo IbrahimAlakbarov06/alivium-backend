@@ -4,6 +4,7 @@ import alivium.model.dto.request.ProductVariantRequest;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ProductVariantResponse;
 import alivium.service.ProductVariantService;
+import alivium.service.impl.ProductVariantServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -2,6 +2,7 @@ package alivium.controller;
 
 import alivium.domain.entity.ProductImage;
 import alivium.model.dto.request.ProductImageRequest;
+import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ProductImageResponse;
 import alivium.service.ProductImageService;
 import jakarta.validation.Valid;
@@ -75,5 +76,19 @@ public class ProductImageController {
     public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
         productImageService.deleteProductImage(imageId);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/product/{productId}")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN')")
+    public ResponseEntity<MessageResponse> deleteProductImages(@PathVariable Long productId) {
+        productImageService.deleteProductImages(productId);
+        return ResponseEntity.ok(new MessageResponse("All product images deleted successfully"));
+    }
+
+    @PatchMapping("/{imageId}/refresh-url")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN_ROLE')")
+    public ResponseEntity<ProductImageResponse> refreshImageUrl(@PathVariable Long imageId) {
+        ProductImageResponse response = productImageService.refreshUrl(imageId);
+        return ResponseEntity.ok(response);
     }
 }

@@ -9,6 +9,7 @@ import alivium.model.dto.response.ReviewResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,7 @@ public class ReviewMapper {
                 .comment(request.getComment())
                 .active(true)
                 .verified(false)
-                .images(Collections.emptySet())
+                .images(new HashSet<>())
                 .build();
     }
 

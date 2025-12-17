@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -14,8 +15,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "product_images")
-@Builder
-public class ProductImage {
+@SuperBuilder
+public class ProductImage extends BaseImage{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,14 +25,16 @@ public class ProductImage {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Transient
-    private String imageUrl;
-
-    private String imageKey;
+//    @Column(columnDefinition = "TEXT")
+//    private String imageUrl;
+//
+//    private LocalDateTime imageUrlExpiry;
+//
+//    private String imageKey;
 
     @Column(nullable = false)
     private Boolean isPrimary = false;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+//    @CreationTimestamp
+//    private LocalDateTime createdAt;
 }

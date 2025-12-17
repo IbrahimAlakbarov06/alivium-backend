@@ -4,6 +4,7 @@ import alivium.domain.entity.User;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.WishlistResponse;
 import alivium.service.WishlistService;
+import alivium.service.impl.WishlistServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

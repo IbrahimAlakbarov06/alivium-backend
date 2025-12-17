@@ -7,6 +7,7 @@ import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ProductRatingResponse;
 import alivium.model.dto.response.ReviewResponse;
 import alivium.service.ReviewService;
+import alivium.service.impl.ReviewServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
