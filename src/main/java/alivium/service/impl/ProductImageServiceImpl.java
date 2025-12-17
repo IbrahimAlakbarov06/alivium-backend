@@ -9,7 +9,7 @@ import alivium.exception.NotFoundException;
 import alivium.mapper.ProductImageMapper;
 import alivium.model.dto.request.ProductImageRequest;
 import alivium.model.dto.response.ProductImageResponse;
-import alivium.service.MinioService;
+import alivium.service.ImageStorageService;
 import alivium.service.ProductImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class ProductImageServiceImpl implements ProductImageService {
 
     private final ProductImageRepository pimRepo;
-    private final MinioService minioService;
+    private final ImageStorageService imageStorageService;
     private final MinioProperties minioProperties;
     private final ProductRepository productRepository;
     private final ProductImageMapper productImageMapper;
@@ -39,7 +39,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         if(productImage.getImageUrl()==null
                 || productImage.getImageUrlExpiry()==null
                 || productImage.getImageUrlExpiry().isBefore(LocalDateTime.now())){
-            String newUrl=minioService.getPreSignedUrl(productBucket(),productImage.getImageKey(),3600);
+            String newUrl= imageStorageService.getPreSignedUrl(productBucket(),productImage.getImageKey(),3600);
             productImage.setImageUrl(newUrl);
             LocalDateTime newExpiry=LocalDateTime.now().plusSeconds(3600);
             productImage.setImageUrlExpiry(newExpiry);
@@ -51,7 +51,6 @@ public class ProductImageServiceImpl implements ProductImageService {
     @Async
     @Transactional
     public void updateImageUrlAsync(Long imageId, String url, LocalDateTime expiry) {
-
         ProductImage image = findById(imageId);
 
         image.setImageUrl(url);
@@ -65,8 +64,8 @@ public class ProductImageServiceImpl implements ProductImageService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
 
-        String key = minioService.uploadFile(request.getFile(), productBucket());
-        String url = minioService.getPreSignedUrl(productBucket(), key, 3600);
+        String key = imageStorageService.uploadFile(request.getFile(), productBucket());
+        String url = imageStorageService.getPreSignedUrl(productBucket(), key, 3600);
 
         ProductImage image = productImageMapper.toEntity(request, product);
         image.setImageKey(key);
@@ -87,9 +86,25 @@ public class ProductImageServiceImpl implements ProductImageService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"productImages", "products", "wishlist"}, allEntries = true)
+    public void deleteProductImages(Long productId) {
+        productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
+
+        List<ProductImage> images = pimRepo.findByProductId(productId);
+
+        for (ProductImage image : images) {
+            imageStorageService.deleteFile(productBucket(), image.getImageKey());
+            pimRepo.delete(image);
+        }
+    }
+
+    @Override
+    @Transactional
     public String getImageDownloadUrl(Long imageId) {
         ProductImage image = findById(imageId);
-        return minioService.getPreSignedUrl(productBucket(), image.getImageKey(), 3600);
+        return getValidImageUrl(image);
     }
 
     @Override
@@ -127,7 +142,7 @@ public class ProductImageServiceImpl implements ProductImageService {
     @Transactional(readOnly = true)
     public InputStream downloadProductImage(Long imageId) {
         ProductImage image = findById(imageId);
-        return minioService.downloadFile(productBucket(), image.getImageKey());
+        return imageStorageService.downloadFile(productBucket(), image.getImageKey());
     }
 
     @Override
@@ -137,15 +152,27 @@ public class ProductImageServiceImpl implements ProductImageService {
         ProductImage existing = findById(imageId);
 
         deleteFileFromStorage(existing);
-        String key = minioService.uploadFile(newFile, productBucket());
+        String key = imageStorageService.uploadFile(newFile, productBucket());
 
         existing.setImageKey(key);
         existing.setImageUrl(null);
         existing.setImageUrlExpiry(null);
 
-        existing.setImageUrl(minioService.getPreSignedUrl(productBucket(), key, 3600));
+        existing.setImageUrl(imageStorageService.getPreSignedUrl(productBucket(), key, 3600));
         ProductImage saved = pimRepo.save(existing);
 
+        return productImageMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "reviewImages", allEntries = true)
+    public ProductImageResponse refreshUrl(Long imageId) {
+        ProductImage image = findById(imageId);
+        String url = imageStorageService.getPreSignedUrl(productBucket(), image.getImageKey(), 3600);
+        image.setImageUrl(url);
+        image.setImageUrlExpiry(LocalDateTime.now().plusSeconds(3600));
+        ProductImage saved = pimRepo.save(image);
         return productImageMapper.toResponse(saved);
     }
 
@@ -156,7 +183,7 @@ public class ProductImageServiceImpl implements ProductImageService {
     }
 
     private void deleteFileFromStorage(ProductImage image) {
-        minioService.deleteFile(productBucket(), image.getImageKey());
+        imageStorageService.deleteFile(productBucket(), image.getImageKey());
     }
 
     private String productBucket() {

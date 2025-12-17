@@ -1,8 +1,6 @@
 package alivium.service.impl;
 
-import alivium.domain.entity.Category;
-import alivium.domain.entity.Collection;
-import alivium.domain.entity.Product;
+import alivium.domain.entity.*;
 import alivium.domain.repository.CategoryRepository;
 import alivium.domain.repository.CollectionRepository;
 import alivium.domain.repository.ProductRepository;

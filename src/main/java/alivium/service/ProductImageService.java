@@ -17,4 +17,6 @@ public interface ProductImageService {
     InputStream downloadProductImage(Long imageId);
     ProductImageResponse updateProductImage(Long imageId, MultipartFile newFile);
     ProductImage findById(Long imageId);
+    ProductImageResponse refreshUrl(Long imageId);
+    void deleteProductImages(Long productId);
 }
