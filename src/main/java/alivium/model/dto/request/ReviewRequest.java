@@ -28,5 +28,5 @@ public class ReviewRequest {
     @Size(max = 1000, message = "Comment must not exceed 1000 characters")
     private String comment;
 
-    private List<String> imageKeys;
+//    private List<String> imageKeys;
 }

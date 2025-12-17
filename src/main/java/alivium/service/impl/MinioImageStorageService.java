@@ -1,6 +1,7 @@
-package alivium.service;
+package alivium.service.impl;
 
 import alivium.config.MinioProperties;
+import alivium.service.ImageStorageService;
 import io.minio.*;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,7 @@ import java.io.InputStream;
 
 @Service
 @RequiredArgsConstructor
-public class MinioService {
+public class MinioImageStorageService implements ImageStorageService {
     private final MinioProperties minioProperties;
     private final MinioClient minioClient;
 

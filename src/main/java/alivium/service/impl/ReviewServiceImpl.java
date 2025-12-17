@@ -18,7 +18,6 @@ import alivium.model.dto.request.ReviewUpdateRequest;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ProductRatingResponse;
 import alivium.model.dto.response.ReviewResponse;
-import alivium.service.MinioService;
 import alivium.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -38,9 +36,10 @@ public class ReviewServiceImpl implements ReviewService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
-    private final MinioService minioService;
+    private final MinioImageStorageService minioService;
     private final MinioProperties minioProperties;
 
+    @Override
     @Transactional
     @CacheEvict(value = {"reviews", "products"}, allEntries = true)
     public ReviewResponse createReview(Long userId, ReviewRequest request) {
@@ -57,25 +56,14 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review savedReview = reviewRepository.save(review);
 
-        if (request.getImageKeys() != null && !request.getImageKeys().isEmpty()) {
-            for (String imageKey : request.getImageKeys()) {
-                String imageUrl = minioService.getPreSignedUrl(reviewBucket(), imageKey, 3600);
-                ReviewImage reviewImage = ReviewImage.builder()
-                        .review(savedReview)
-                        .imageKey(imageKey)
-                        .imageUrl(imageUrl)
-                        .build();
-                reviewImageRepository.save(reviewImage);
-            }
-        }
-
         updateProductRating(request.getProductId());
 
         Review reviewWithImages = reviewRepository.findByIdWithImages(savedReview.getId())
-                .orElseThrow(()-> new NotFoundException("Review not found"));
+                .orElseThrow(() -> new NotFoundException("Review not found"));
         return reviewMapper.toResponse(reviewWithImages);
     }
 
+    @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "reviews", key = "'user-' + #userId")
     public List<ReviewResponse> getUserReviews(Long userId) {
@@ -83,6 +71,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toListResponse(reviews);
     }
 
+    @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "reviews", key = "'product-' + #productId")
     public List<ReviewResponse> getProductReviews(Long productId) {
@@ -90,7 +79,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toListResponse(reviews);
     }
 
-
+    @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "reviews", key = "'rating-' + #productId")
     public ProductRatingResponse getProductRatingStats(Long productId) {
@@ -111,6 +100,7 @@ public class ReviewServiceImpl implements ReviewService {
                 fiveStar, fourStar, threeStar, twoStar, oneStar);
     }
 
+    @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "reviews", key = "#reviewId")
     public ReviewResponse getReviewById(Long reviewId) {
@@ -118,7 +108,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toResponse(review);
     }
 
-
+    @Override
     @Transactional
     @CacheEvict(value = {"reviews", "products"}, allEntries = true)
     public ReviewResponse updateReview(Long userId, Long reviewId, ReviewUpdateRequest request) {
@@ -129,7 +119,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         reviewMapper.updateReviewFromRequest(review, request);
-        Review updated=reviewRepository.save(review);
+        Review updated = reviewRepository.save(review);
 
         if (request.getRating() != null) {
             updateProductRating(review.getProduct().getId());
@@ -138,10 +128,10 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toResponse(updated);
     }
 
-
+    @Override
     @Transactional
     @CacheEvict(value = {"reviews", "products"}, allEntries = true)
-    public ReviewResponse toggleReviewStatus(Long reviewId){
+    public ReviewResponse toggleReviewStatus(Long reviewId) {
         Review review = findById(reviewId);
         review.setActive(!review.getActive());
 
@@ -149,15 +139,16 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toResponse(reviewRepository.save(review));
     }
 
+    @Override
     @Transactional
     @CacheEvict(value = {"reviews", "products"}, allEntries = true)
-    public ReviewResponse verifyReview(Long reviewId){
+    public ReviewResponse verifyReview(Long reviewId) {
         Review review = findById(reviewId);
         review.setActive(true);
         return reviewMapper.toResponse(reviewRepository.save(review));
     }
 
-
+    @Override
     @Transactional
     @CacheEvict(value = {"reviews", "products"}, allEntries = true)
     public MessageResponse deleteReview(Long userId, Long reviewId) {
@@ -175,6 +166,7 @@ public class ReviewServiceImpl implements ReviewService {
         return new MessageResponse("Review deleted successfully");
     }
 
+    @Override
     @Transactional
     @CacheEvict(value = {"reviews", "products"}, allEntries = true)
     public MessageResponse deleteReviewByAdmin(Long reviewId) {
@@ -187,19 +179,15 @@ public class ReviewServiceImpl implements ReviewService {
         updateProductRating(productId);
         return new MessageResponse("Review deleted successfully by admin");
     }
+
     private void deleteReviewImages(Review review) {
         List<ReviewImage> images = reviewImageRepository.findByReviewId(review.getId());
         for (ReviewImage image : images) {
-            try {
-                minioService.deleteFile(reviewBucket(), image.getImageKey());
-            } catch (Exception e) {
-
-            }
+            minioService.deleteFile(reviewBucket(), image.getImageKey());
         }
     }
 
-
-    private void updateProductRating(Long productId){
+    private void updateProductRating(Long productId) {
         Product product = findProductById(productId);
 
         Double averageRating = reviewRepository.calculateRating(productId);
@@ -218,12 +206,12 @@ public class ReviewServiceImpl implements ReviewService {
 
     private Product findProductById(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
     }
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(()->new NotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
     }
 
     private String reviewBucket() {
