@@ -20,9 +20,11 @@ public class VoucherUsage {
     private Long id;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "voucher_id", nullable = false)
     private Voucher voucher;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToOne
