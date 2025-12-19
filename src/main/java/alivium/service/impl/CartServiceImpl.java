@@ -10,6 +10,7 @@ import alivium.model.dto.request.UpdateCartItemRequest;
 import alivium.model.dto.response.CartResponse;
 import alivium.model.dto.response.MessageResponse;
 import alivium.service.CartService;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,6 +29,7 @@ public class CartServiceImpl implements CartService {
     private final ProductVariantRepository variantRepository;
     private final UserRepository userRepository;
     private final CartMapper cartMapper;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
@@ -93,6 +95,8 @@ public class CartServiceImpl implements CartService {
             CartItem cartItem=cartMapper.toEntity(cart, product, variant, request, price);
             cartItemRepository.save(cartItem);
         }
+        entityManager.flush();
+        entityManager.clear();
 
         Cart updatedCart = cartRepository.findByUserIdWithItems(userId)
                 .orElseThrow(() -> new NotFoundException("Cart not found"));
