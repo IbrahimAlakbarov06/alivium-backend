@@ -26,7 +26,7 @@ public class VoucherController {
     }
 
     @PutMapping("/{voucherId}")
-    public ResponseEntity<VoucherResponse> updateVoucher(@PathVariable Long voucherId, VoucherRequest request) {
+    public ResponseEntity<VoucherResponse> updateVoucher(@PathVariable Long voucherId,@Valid @RequestBody VoucherRequest request) {
         return ResponseEntity.ok(voucherService.updateVoucher(voucherId, request));
     }
 

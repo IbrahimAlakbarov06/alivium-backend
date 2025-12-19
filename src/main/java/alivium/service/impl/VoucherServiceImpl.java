@@ -20,16 +20,16 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepo;
     private final VoucherMapper voucherMapper;
 
     @Override
+    @Transactional
     @CacheEvict(value = "vouchers", allEntries = true)
     public VoucherResponse createVoucher(VoucherRequest request) {
-        if(voucherRepo.existsByCode(request.getCode())) {
+        if (voucherRepo.existsByCode(request.getCode())) {
             throw new AlreadyExistsException("Voucher already exists with code: " + request.getCode());
         }
 
@@ -39,6 +39,7 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = "vouchers", allEntries = true)
     public VoucherResponse updateVoucher(Long voucherId, VoucherRequest request) {
         Voucher voucher = findById(voucherId);
@@ -48,6 +49,7 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = "vouchers", allEntries = true)
     public void deleteVoucher(Long voucherId) {
         Voucher voucher = findById(voucherId);
@@ -85,12 +87,13 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional(readOnly = true)
     @Cacheable(value = "vouchers", key = "#code")
     public VoucherResponse getVoucherByCode(String code) {
-        Voucher voucher= voucherRepo.findByCode(code)
+        Voucher voucher = voucherRepo.findByCode(code)
                 .orElseThrow(() -> new NotFoundException("Voucher not found with code: " + code));
         return voucherMapper.toResponse(voucher);
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = "vouchers", allEntries = true)
     public VoucherResponse toggleVoucherStatus(Long voucherId, boolean isActive) {
         Voucher voucher = findById(voucherId);
