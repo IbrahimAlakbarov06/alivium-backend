@@ -36,4 +36,12 @@ public class Cart {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    private void ensureItemsInitialized() {
+        if (this.cartItems == null) {
+            this.cartItems = new HashSet<>();
+        }
+    }
 }
