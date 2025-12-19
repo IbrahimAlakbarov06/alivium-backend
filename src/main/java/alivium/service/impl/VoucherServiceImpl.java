@@ -3,10 +3,12 @@ package alivium.service.impl;
 import alivium.domain.entity.Voucher;
 import alivium.domain.repository.VoucherRepository;
 import alivium.exception.AlreadyExistsException;
+import alivium.exception.InvalidInputException;
 import alivium.exception.NotFoundException;
 import alivium.mapper.VoucherMapper;
 import alivium.model.dto.request.VoucherRequest;
 import alivium.model.dto.response.VoucherResponse;
+import alivium.model.enums.DiscountType;
 import alivium.service.VoucherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -14,6 +16,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +35,11 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucherRepo.existsByCode(request.getCode())) {
             throw new AlreadyExistsException("Voucher already exists with code: " + request.getCode());
         }
-
+        if (request.getType() == DiscountType.PERCENTAGE) {
+            if (request.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
+                throw new InvalidInputException("Percentage discount cannot exceed 100%");
+            }
+        }
         Voucher voucher = voucherMapper.toEntity(request);
         Voucher saved = voucherRepo.save(voucher);
         return voucherMapper.toResponse(saved);
