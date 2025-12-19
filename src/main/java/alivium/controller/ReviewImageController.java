@@ -2,7 +2,6 @@ package alivium.controller;
 
 import alivium.domain.entity.User;
 import alivium.model.dto.response.MessageResponse;
-import alivium.model.dto.response.ProductImageResponse;
 import alivium.model.dto.response.ReviewImageResponse;
 import alivium.service.ReviewImageService;
 import lombok.RequiredArgsConstructor;

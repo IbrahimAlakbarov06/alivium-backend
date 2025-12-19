@@ -1,39 +1,63 @@
 package alivium.domain.entity;
 
+import alivium.model.enums.DiscountType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Table(name = "vouchers")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Voucher {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String code;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String title;
+
+    @Column
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Double discountPercentage;
+    private DiscountType type;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountValue;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal minOrderAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal maxDiscountAmount;
+
+    @Column
+    private Integer totalUsageLimit;
 
     @Column(nullable = false)
-    private LocalDateTime startDate;
+    private Integer perUserLimit;
 
     @Column(nullable = false)
-    private LocalDateTime endDate;
+    private Boolean isActive = true;
 
-    private Boolean active = true;
+    private LocalDateTime expiryDate;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
 }

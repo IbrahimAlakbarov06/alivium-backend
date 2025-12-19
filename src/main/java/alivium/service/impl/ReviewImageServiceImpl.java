@@ -82,7 +82,7 @@ public class ReviewImageServiceImpl implements ReviewImageService {
     }
 
     @Transactional
-    @CacheEvict(value = "reviewImages", allEntries = true)
+    @CacheEvict(value = {"reviewImages","reviews"}, allEntries = true)
     public MessageResponse deleteReviewImage(Long userId, Long imageId) {
         ReviewImage image = findById(imageId);
         Review review = image.getReview();
@@ -98,7 +98,7 @@ public class ReviewImageServiceImpl implements ReviewImageService {
     }
 
     @Transactional
-    @CacheEvict(value = "reviewImages", allEntries = true)
+    @CacheEvict(value ={"reviewImages","reviews"}, allEntries = true)
     public MessageResponse deleteReviewImageByAdmin(Long imageId) {
         ReviewImage image = findById(imageId);
         deleteImageFromStorage(image);
@@ -108,7 +108,7 @@ public class ReviewImageServiceImpl implements ReviewImageService {
     }
 
     @Transactional
-    @CacheEvict(value = "reviewImages", allEntries = true)
+    @CacheEvict(value ={"reviewImages","reviews"}, allEntries = true)
     public ReviewImageResponse refreshUrl(Long imageId) {
         ReviewImage image = findById(imageId);
         String url = imageStorage.getPreSignedUrl(reviewBucket(), image.getImageKey(), 3600);
@@ -141,7 +141,7 @@ public class ReviewImageServiceImpl implements ReviewImageService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "reviewImages", allEntries = true)
+    @CacheEvict(value = {"reviewImages","reviews"}, allEntries = true)
     public ReviewImageResponse updateReviewImage(Long imageId, MultipartFile newFile) {
         ReviewImage existing = findById(imageId);
 
