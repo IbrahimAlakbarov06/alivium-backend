@@ -1,8 +1,7 @@
 package alivium.mapper;
 
-import alivium.domain.entity.Cart;
-import alivium.domain.entity.CartItem;
-import alivium.domain.entity.ProductImage;
+import alivium.domain.entity.*;
+import alivium.model.dto.request.AddToCartRequest;
 import alivium.model.dto.response.CartItemResponse;
 import alivium.model.dto.response.CartResponse;
 import org.springframework.stereotype.Component;
@@ -13,6 +12,16 @@ import java.util.stream.Collectors;
 
 @Component
 public class CartMapper {
+
+    public CartItem toEntity(Cart cart, Product product, ProductVariant variant, AddToCartRequest request, BigDecimal price) {
+        return CartItem.builder()
+                .cart(cart)
+                .product(product)
+                .variant(variant)
+                .quantity(request.getQuantity())
+                .price(price)
+                .build();
+    }
 
     public CartItemResponse toItemResponse(CartItem item) {
         if (item == null) {
