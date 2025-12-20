@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -148,5 +149,11 @@ public class ProductMapper {
                         .imageUrl(i.getImageUrl())
                         .build())
                 .collect(Collectors.toSet());
+    }
+
+    public List<ProductResponse> toListResponse(List<Product> products) {
+        return products.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 }
