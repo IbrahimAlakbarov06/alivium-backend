@@ -3,6 +3,7 @@ package alivium.domain.entity;
 import alivium.model.enums.AuthProvider;
 import alivium.model.enums.UserRole;
 import alivium.model.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -76,6 +78,18 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
+
+    @OneToMany(mappedBy ="user")
+    @JsonIgnore
+    private List<ChatRoom> chatRooms;
+
+    @OneToMany(mappedBy = "admin")
+    @JsonIgnore
+    private List<ChatRoom> assignedChats;
+
+    @OneToMany(mappedBy = "sender")
+    @JsonIgnore
+    private List<ChatMessage> sentMessages;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
