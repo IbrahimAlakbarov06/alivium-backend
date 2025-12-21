@@ -2,6 +2,7 @@ package alivium.controller;
 
 import alivium.domain.entity.User;
 import alivium.model.dto.response.ChatRoomResponse;
+import alivium.model.enums.ChatStatus;
 import alivium.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,8 +41,9 @@ public class ChatRoomController {
     }
 
     @PutMapping("/{chatRoomId}/close")
-    public ResponseEntity<ChatRoomResponse> closeChat(@PathVariable Long chatRoomId) {
-        ChatRoomResponse response = chatRoomService.closeChat(chatRoomId);
+    public ResponseEntity<ChatRoomResponse> closeChat(@PathVariable Long chatRoomId,
+                                                      @AuthenticationPrincipal User user) {
+        ChatRoomResponse response = chatRoomService.closeChat(chatRoomId,user.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -50,5 +52,21 @@ public class ChatRoomController {
         ChatRoomResponse response = chatRoomService.getById(chatRoomId);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{chatRoomId}/resolve")
+    public ResponseEntity<ChatRoomResponse> markResolved(@PathVariable Long chatRoomId,
+                                                         @AuthenticationPrincipal User user) {
+        ChatRoomResponse response = chatRoomService.markResolved(chatRoomId, user.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/my/status")
+    public ResponseEntity<List<ChatRoomResponse>> getMyChatRoomsByStatus(
+            @AuthenticationPrincipal User user,
+            @RequestParam ChatStatus status) {
+        List<ChatRoomResponse> response = chatRoomService.getChatRoomsByStatus(user.getId(), status);
+        return ResponseEntity.ok(response);
+    }
+
 }
 

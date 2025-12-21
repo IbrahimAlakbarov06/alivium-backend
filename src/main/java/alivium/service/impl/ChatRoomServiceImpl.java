@@ -37,6 +37,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public ChatRoomResponse createChatRoom(Long userId) {
         User user = findUserById(userId);
 
+        if(chatRoomRepository.existsByUserAndStatus(user,ChatStatus.OPEN)){
+            throw new BusinessException("User already has an open chat room");
+        }
+
         ChatRoom chatRoom = ChatRoom.builder()
                 .user(user)
                 .admin(null)
@@ -78,8 +82,11 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     public ChatRoomResponse assignAdmin(Long chatRoomId, Long adminId) {
         ChatRoom chatRoom = findRoomById(chatRoomId);
-        User admin = findUserById(adminId);
 
+        if(chatRoom.getStatus()==ChatStatus.CLOSED){
+            throw new BusinessException("Cannot assign admin to a closed chat");
+        }
+        User admin = findUserById(adminId);
         if (admin.getRole() != UserRole.ADMIN_ROLE) {
             throw new BusinessException("User with id " + adminId + " is not an admin");
         }
@@ -92,8 +99,18 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Transactional
     @CacheEvict(value = "chatRooms", allEntries = true)
     @Override
-    public ChatRoomResponse closeChat(Long chatRoomId) {
+    public ChatRoomResponse closeChat(Long chatRoomId,Long currentUserId) {
         ChatRoom chatRoom = findRoomById(chatRoomId);
+        if (chatRoom.getStatus() == ChatStatus.CLOSED) {
+            throw new BusinessException("Chat room is already closed");
+        }
+
+        User currentUser = findUserById(currentUserId);
+        if (!currentUser.equals(chatRoom.getAdmin())
+                && currentUser.getRole() != UserRole.ADMIN_ROLE) {
+            throw new BusinessException("You are not allowed to close this chat");
+        }
+
         chatRoom.setStatus(ChatStatus.CLOSED);
         ChatRoom updatedChatRoom = chatRoomRepository.save(chatRoom);
         return chatRoomMapper.toResponse(updatedChatRoom);
@@ -106,6 +123,40 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         ChatRoom chatRoom = findRoomById(chatRoomId);
         return chatRoomMapper.toResponse(chatRoom);
     }
+
+    @Override
+    public ChatRoomResponse markResolved(Long chatRoomId, Long userId) {
+        ChatRoom chatRoom = findRoomById(chatRoomId);
+
+        if(!chatRoom.getUser().getId().equals(userId)){
+            throw new BusinessException("You are not the owner of this chat");
+        }
+        if (chatRoom.getStatus() != ChatStatus.OPEN) {
+            throw new BusinessException("Chat cannot be resolved in current state");
+        }
+        chatRoom.setStatus(ChatStatus.USER_RESOLVED);
+        return chatRoomMapper.toResponse(chatRoomRepository.save(chatRoom));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<ChatRoomResponse> getChatRoomsByStatus(Long userId, ChatStatus status) {
+        User user = findUserById(userId);
+
+        List<ChatRoom> list = new ArrayList<>();
+        if (user.getRole() == UserRole.SUPER_ADMIN_ROLE) {
+            list = chatRoomRepository.findByStatus(status);
+        } else if (user.getRole() == UserRole.ADMIN_ROLE) {
+            list = chatRoomRepository.findByAdminAndStatus(user, status);
+        } else if (user.getRole() == UserRole.USER_ROLE) {
+            list = chatRoomRepository.findByUserAndStatus(user, status);
+        }
+
+        return list.stream()
+                .map(chatRoomMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
 
     private User findUserById(Long id) {
         return userRepository.findById(id)

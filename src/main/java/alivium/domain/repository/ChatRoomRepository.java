@@ -7,13 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     List<ChatRoom> findByUser(User user);
     List<ChatRoom> findByAdmin(User admin);
     List<ChatRoom> findByStatus(ChatStatus status);
-    Optional<ChatRoom> findByUserAndAdminAndStatus(User user, User admin, ChatStatus status);
-
+    List<ChatRoom> findByUserAndStatus(User user, ChatStatus status);
+    List<ChatRoom> findByAdminAndStatus(User admin, ChatStatus status);
+    boolean existsByUserAndStatus(User user, ChatStatus chatStatus);
 }
