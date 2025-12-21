@@ -1,0 +1,119 @@
+package alivium.service.impl;
+
+import alivium.domain.entity.ChatMessage;
+import alivium.domain.entity.ChatRoom;
+import alivium.domain.entity.User;
+import alivium.domain.repository.ChatMessageRepository;
+import alivium.domain.repository.ChatRoomRepository;
+import alivium.domain.repository.UserRepository;
+import alivium.exception.BusinessException;
+import alivium.exception.NotFoundException;
+import alivium.mapper.ChatRoomMapper;
+import alivium.model.dto.response.ChatRoomResponse;
+import alivium.model.enums.ChatStatus;
+import alivium.model.enums.UserRole;
+import alivium.service.ChatRoomService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ChatRoomServiceImpl implements ChatRoomService {
+
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMapper chatRoomMapper;
+    private final UserRepository userRepository;
+    private final ChatMessageRepository chatMessageRepository;
+
+    @Transactional
+    @Override
+    public ChatRoomResponse createChatRoom(Long userId) {
+        User user = findUserById(userId);
+
+        ChatRoom chatRoom = ChatRoom.builder()
+                .user(user)
+                .admin(null)
+                .status(ChatStatus.OPEN)
+                .build();
+        chatRoomRepository.save(chatRoom);
+
+        ChatMessage welcomeMessage = ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .sender(null)
+                .message("Hello! Welcome to support. How can we help you?")
+                .read(true)
+                .build();
+        chatMessageRepository.save(welcomeMessage);
+
+        return chatRoomMapper.toResponse(chatRoom);
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(value = "chatRooms", key = "#currentUserId")
+    @Override
+    public List<ChatRoomResponse> getMyChatRooms(Long currentUserId) {
+        User user = findUserById(currentUserId);
+
+        List<ChatRoom> list = new ArrayList<>();
+        if (user.getRole() == UserRole.ADMIN_ROLE) {
+            list = chatRoomRepository.findByAdmin(user);
+        } else if (user.getRole() == UserRole.USER_ROLE) {
+            list = chatRoomRepository.findByUser(user);
+        }
+
+        return list.stream()
+                .map(chatRoomMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @CacheEvict(value = "chatRooms", allEntries = true)
+    @Override
+    public ChatRoomResponse assignAdmin(Long chatRoomId, Long adminId) {
+        ChatRoom chatRoom = findRoomById(chatRoomId);
+        User admin = findUserById(adminId);
+
+        if (admin.getRole() != UserRole.ADMIN_ROLE) {
+            throw new BusinessException("User with id " + adminId + " is not an admin");
+        }
+
+        chatRoom.setAdmin(admin);
+        ChatRoom updatedChatRoom = chatRoomRepository.save(chatRoom);
+        return chatRoomMapper.toResponse(updatedChatRoom);
+    }
+
+    @Transactional
+    @CacheEvict(value = "chatRooms", allEntries = true)
+    @Override
+    public ChatRoomResponse closeChat(Long chatRoomId) {
+        ChatRoom chatRoom = findRoomById(chatRoomId);
+        chatRoom.setStatus(ChatStatus.CLOSED);
+        ChatRoom updatedChatRoom = chatRoomRepository.save(chatRoom);
+        return chatRoomMapper.toResponse(updatedChatRoom);
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(value = "chatRooms", key = "#chatRoomId")
+    @Override
+    public ChatRoomResponse getById(Long chatRoomId) {
+        ChatRoom chatRoom = findRoomById(chatRoomId);
+        return chatRoomMapper.toResponse(chatRoom);
+    }
+
+    private User findUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
+    }
+
+    private ChatRoom findRoomById(Long id) {
+        return chatRoomRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Chat Room not found with id: " + id));
+    }
+}
