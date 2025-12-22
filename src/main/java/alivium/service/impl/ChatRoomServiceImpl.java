@@ -16,9 +16,11 @@ import alivium.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -157,6 +159,22 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                 .collect(Collectors.toList());
     }
 
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    @CacheEvict(value = "chatRooms", allEntries = true)
+    public void autoCloseInactiveChats(){
+        List<ChatRoom> openRooms=chatRoomRepository.findByStatus(ChatStatus.OPEN);
+        for(ChatRoom room:openRooms){
+            ChatMessage last=chatMessageRepository.findTopByChatRoomOrderBySentAtDesc(room);
+            if(last!=null
+                    && last.getSender()!=null
+                    && !last.getSender().equals(room.getUser())
+                    && last.getSentAt().isBefore(LocalDateTime.now().minusMinutes(10))){
+                room.setStatus(ChatStatus.CLOSED);
+                chatRoomRepository.save(room);
+            }
+        }
+    }
 
     private User findUserById(Long id) {
         return userRepository.findById(id)

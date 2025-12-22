@@ -48,6 +48,7 @@ public class ChatRoomController {
     }
 
     @GetMapping("/{chatRoomId}")
+    @PreAuthorize("hasRole('ADMIN_ROLE') or hasRole('SUPER_ADMIN_ROLE')")
     public ResponseEntity<ChatRoomResponse> getById(@PathVariable Long chatRoomId) {
         ChatRoomResponse response = chatRoomService.getById(chatRoomId);
         return ResponseEntity.ok(response);
