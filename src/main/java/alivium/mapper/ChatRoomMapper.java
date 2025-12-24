@@ -23,15 +23,17 @@ public class ChatRoomMapper {
     public ChatRoomResponse toResponse(ChatRoom chatRoom) {
         if (chatRoom == null) return null;
 
+        User admin = chatRoom.getAdmin();
+
         return ChatRoomResponse.builder()
                 .id(chatRoom.getId())
                 .userId(chatRoom.getUser().getId())
                 .userFullName(chatRoom.getUser().getFullName())
-                .adminId(chatRoom.getAdmin().getId())
-                .adminFullName(chatRoom.getAdmin().getFullName())
+                .adminId(admin != null ? admin.getId() : null)
+                .adminFullName(admin != null ? admin.getFullName() : null)
                 .createdAt(chatRoom.getCreatedAt())
                 .status(chatRoom.getStatus())
                 .build();
-
     }
+
 }

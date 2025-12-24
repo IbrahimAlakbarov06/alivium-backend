@@ -33,7 +33,7 @@ public class ChatRoomController {
     }
 
     @PutMapping("/{chatRoomId}/assignAdmin")
-    @PreAuthorize("hasRole('ADMIN_ROLE') or hasRole('SUPER_ADMIN_ROLE')")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN_ROLE')")
     public ResponseEntity<ChatRoomResponse> assignAdmin(@PathVariable Long chatRoomId,
                                                         @RequestParam Long adminId) {
         ChatRoomResponse response = chatRoomService.assignAdmin(chatRoomId, adminId);
@@ -41,6 +41,7 @@ public class ChatRoomController {
     }
 
     @PutMapping("/{chatRoomId}/close")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN_ROLE')")
     public ResponseEntity<ChatRoomResponse> closeChat(@PathVariable Long chatRoomId,
                                                       @AuthenticationPrincipal User user) {
         ChatRoomResponse response = chatRoomService.closeChat(chatRoomId,user.getId());
@@ -48,7 +49,7 @@ public class ChatRoomController {
     }
 
     @GetMapping("/{chatRoomId}")
-    @PreAuthorize("hasRole('ADMIN_ROLE') or hasRole('SUPER_ADMIN_ROLE')")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN_ROLE')")
     public ResponseEntity<ChatRoomResponse> getById(@PathVariable Long chatRoomId) {
         ChatRoomResponse response = chatRoomService.getById(chatRoomId);
         return ResponseEntity.ok(response);

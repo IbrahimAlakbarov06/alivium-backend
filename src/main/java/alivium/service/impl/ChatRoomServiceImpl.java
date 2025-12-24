@@ -6,6 +6,7 @@ import alivium.domain.entity.User;
 import alivium.domain.repository.ChatMessageRepository;
 import alivium.domain.repository.ChatRoomRepository;
 import alivium.domain.repository.UserRepository;
+import alivium.exception.AlreadyExistsException;
 import alivium.exception.BusinessException;
 import alivium.exception.NotFoundException;
 import alivium.mapper.ChatRoomMapper;
@@ -89,8 +90,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
             throw new BusinessException("Cannot assign admin to a closed chat");
         }
         User admin = findUserById(adminId);
-        if (admin.getRole() != UserRole.ADMIN_ROLE) {
-            throw new BusinessException("User with id " + adminId + " is not an admin");
+        if (chatRoom.getAdmin() != null && admin.equals(chatRoom.getAdmin())) {
+            throw new AlreadyExistsException("This admin already assigned this chatroom");
         }
 
         chatRoom.setAdmin(admin);
@@ -106,13 +107,6 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         if (chatRoom.getStatus() == ChatStatus.CLOSED) {
             throw new BusinessException("Chat room is already closed");
         }
-
-        User currentUser = findUserById(currentUserId);
-        if (!currentUser.equals(chatRoom.getAdmin())
-                && currentUser.getRole() != UserRole.ADMIN_ROLE) {
-            throw new BusinessException("You are not allowed to close this chat");
-        }
-
         chatRoom.setStatus(ChatStatus.CLOSED);
         ChatRoom updatedChatRoom = chatRoomRepository.save(chatRoom);
         return chatRoomMapper.toResponse(updatedChatRoom);
