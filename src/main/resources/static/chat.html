@@ -700,6 +700,7 @@
 
         if (!message) {
             log('Boş mesaj göndərilə bilməz');
+            alert('Mesaj boşdur!');
             return;
         }
 
@@ -710,40 +711,93 @@
         }
 
         if (!stompClient || !stompClient.connected) {
-            alert('WebSocket bağlantısı yoxdur!');
+            alert('WebSocket bağlantısı yoxdur! "WebSocket Bağlan" düyməsinə basın.');
             log('Mesaj göndərmə xətası: WebSocket bağlı deyil');
             return;
         }
 
         try {
             const destination = '/app/chat.send';
-            const headers = {};
+            const headers = {
+                'content-type': 'application/json'
+            };
 
-            const payload = JSON.stringify({
+            // Backend ChatMessageRequest - senderId istəyir (userId yox!)
+            const payload = {
                 chatRoomId: selectedRoom.id,
-                userId: currentUser.id,
+                senderId: currentUser.id,  // userId -> senderId
                 message: message
-            });
+            };
 
-            log('🚀 Mesaj göndərilir...');
+            const payloadStr = JSON.stringify(payload);
+
+            log('═══════════════════════════════════');
+            log('📤 MESAJ GÖNDƏRİLİR');
+            log('═══════════════════════════════════');
             log('Destination: ' + destination);
-            log('Payload: ' + payload);
+            log('ChatRoomId: ' + selectedRoom.id);
+            log('SenderId: ' + currentUser.id + ' (düzəldildi: userId -> senderId)');
+            log('Message: "' + message + '"');
+            log('JSON: ' + payloadStr);
+            log('WebSocket Status: ' + (stompClient.connected ? 'CONNECTED ✓' : 'DISCONNECTED ✗'));
 
-            stompClient.send(destination, headers, payload);
-            log('✓ Mesaj serverə göndərildi (gözlənilir...)');
+            // STOMP send
+            stompClient.send(destination, headers, payloadStr);
 
-            input.value = '';
+            log('✓ stompClient.send() çağırıldı');
+            log('⏳ Backend cavabı gözlənilir...');
+            log('═══════════════════════════════════');
 
-            // Fallback: Əgər 3 saniyə ərzində WebSocket-dən gəlməzsə, REST API-dən yenilə
-            setTimeout(async function() {
-                log('⏰ 3 saniyə keçdi, mesajlar yenilənir...');
-                await loadMessages(selectedRoom.id);
-            }, 3000);
+            // Input-u TƏMİZLƏMƏ (test üçün)
+            // input.value = '';
+            input.style.background = '#ffffcc'; // Sarı - göndərilir
+
+            // Fallback: 5 saniyə sonra yoxla
+            let wsReceived = false;
+            const checkTimeout = setTimeout(async function() {
+                if (!wsReceived) {
+                    log('═══════════════════════════════════');
+                    log('⚠️ PROBLEM: 5 SANİYƏ KEÇDƏ CAVAB GƏLMƏDİ!');
+                    log('═══════════════════════════════════');
+                    log('🔍 Backend yoxlanır...');
+
+                    await loadMessages(selectedRoom.id);
+
+                    if (messages.length === 0 || !messages.find(m => m.message === message)) {
+                        log('❌ BACKEND MESAJI ALMADI VƏ YA SAVE ETMƏDİ!');
+                        log('');
+                        log('YOXLAMA ADDMLARI:');
+                        log('1. Backend console-da log varmı?');
+                        log('2. ChatWSController.sendMessage() çağırılırmı?');
+                        log('3. WebSocketConfig düzgündürmü?');
+                        log('');
+                        alert('❌ XƏTA: Mesaj backend-ə çatmadı!\n\nBackend console log-larını yoxlayın:\n- WEBSOCKET MESSAGE RECEIVED log-u görünürmü?\n- Xəta mesajları varmı?');
+                        input.style.background = '#ffcccc'; // Qırmızı - xəta
+                    } else {
+                        log('✓ Mesaj database-də tapıldı amma WebSocket işləmədi');
+                        log('⚠️ WebSocket broadcast problemi var!');
+                        input.style.background = '#ccffcc'; // Yaşıl - uğurlu (REST ilə)
+                        input.value = ''; // İndi təmizlə
+                    }
+                } else {
+                    input.style.background = 'white';
+                    input.value = '';
+                }
+            }, 5000);
+
+            window._lastMessageTimeout = checkTimeout;
+            window._lastMessageReceived = function() {
+                wsReceived = true;
+                clearTimeout(checkTimeout);
+                input.style.background = 'white';
+                input.value = '';
+            };
 
         } catch (err) {
-            log('✗ Mesaj göndərmə xətası: ' + err.message);
+            log('✗ Exception: ' + err.message);
             console.error('Mesaj göndərmə xətası:', err);
-            alert('Mesaj göndərilə bilmədi: ' + err.message);
+            alert('JavaScript xətası: ' + err.message);
+            input.style.background = '#ffcccc';
         }
     }
 
