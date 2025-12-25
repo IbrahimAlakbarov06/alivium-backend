@@ -24,12 +24,14 @@ public class ChatMessageMapper {
     public ChatMessageResponse toResponse(ChatMessage message){
         if (message == null) return null;
 
+        User sender = message.getSender();
+
         return ChatMessageResponse.builder()
                 .id(message.getId())
                 .message(message.getMessage())
                 .chatRoomId(message.getChatRoom().getId())
-                .senderId(message.getSender().getId())
-                .senderFullName(message.getSender().getFullName())
+                .senderId(sender != null ? sender.getId() : null)
+                .senderFullName(sender != null ? sender.getFullName() : "System")
                 .read(message.isRead())
                 .sentAt(message.getSentAt())
                 .build();
