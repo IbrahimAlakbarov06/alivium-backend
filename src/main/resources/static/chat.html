@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .login-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .login-section h3 {
+            margin-bottom: 15px;
+        }
+
+        .login-section input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .login-section button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .login-section button:hover {
+            background: #0056b3;
+        }
+
+        .ws-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .ws-status.connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .ws-status.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .ws-status.connecting {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .user-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: 600px;
+        }
+
+        .rooms-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .rooms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .rooms-header h2 {
+            font-size: 18px;
+        }
+
+        .btn-new {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-new:hover {
+            background: #218838;
+        }
+
+        .room-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .room-item:hover {
+            background: #e9ecef;
+        }
+
+        .room-item.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .room-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .room-item small {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .chat-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            font-size: 18px;
+        }
+
+        .chat-header small {
+            color: #666;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .btn-close {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-close:hover {
+            background: #c82333;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 60%;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .message.sent .message-bubble {
+            background: #007bff;
+            color: white;
+        }
+
+        .message.received .message-bubble {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .message-sender {
+            font-size: 11px;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .message-time {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        .message-input {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .message-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn-send {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-send:hover {
+            background: #0056b3;
+        }
+
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+        }
+
+        .info-box ol {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .debug-log {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .debug-log div {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Chat Test Interface</h1>
+
+    <div class="login-section">
+        <h3>Login / Register</h3>
+        <input type="email" id="emailInput" placeholder="Email">
+        <input type="password" id="passwordInput" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="register()">Register</button>
+        <button onclick="testServerConnection()" style="background: #ffc107; color: #333;">Test Server</button>
+        <button onclick="connectWebSocket()" style="background: #17a2b8;">WebSocket Bağlan</button>
+        <button onclick="disconnectWebSocket()" style="background: #6c757d;">Disconnect</button>
+        <span id="wsStatus" class="ws-status disconnected">Disconnected</span>
+
+        <div id="userInfo" class="user-info" style="display: none;">
+            <strong>Logged in as:</strong> <span id="userName"></span>
+        </div>
+
+        <div class="debug-log" id="debugLog"></div>
+    </div>
+
+    <div class="chat-container">
+        <div class="rooms-panel">
+            <div class="rooms-header">
+                <h2>Chat Otaqları</h2>
+                <button class="btn-new" onclick="createChatRoom()">+ Yeni</button>
+            </div>
+            <div id="roomsList"></div>
+        </div>
+
+        <div class="chat-panel" id="chatPanel">
+            <div class="empty-state">
+                <div>
+                    <p style="font-size: 24px; margin-bottom: 10px;">💬</p>
+                    <p>Chat otağı seçin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>Necə istifadə olunur:</h3>
+        <ol>
+            <li>Əvvəlcə email və password ilə login/register olun</li>
+            <li>"WebSocket Bağlan" düyməsinə basın</li>
+            <li>"+ Yeni" düyməsi ilə yeni chat otağı yaradın</li>
+            <li>Soldakı paneldən chat otağını seçin</li>
+            <li>Sağ tərəfdə real-time mesajlaşın</li>
+        </ol>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    const API_URL = 'http://localhost:8080/api';
+    const WS_URL = 'http://localhost:8080/websocket'; // /ws -> /websocket
+
+    let token = null;
+    let currentUser = null;
+    let chatRooms = [];
+    let selectedRoom = null;
+    let messages = [];
+    let stompClient = null;
+    let currentSubscription = null;
+
+    function log(message) {
+        const logDiv = document.getElementById('debugLog');
+        const time = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.textContent = `[${time}] ${message}`;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(message);
+    }
+
+    async function register() {
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passwordInput').value;
+
+        if (!email || !password) {
+            alert('Email və password daxil edin!');
+            return;
+        }
+
+        try {
+            log('Qeydiyyat başladı...');
+            const res = await fetch(API_URL + '/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    firstName: 'Test',
+                    lastName: 'User',
+                    email: email,
+                    password: password
+                })
+            });
+
+            if (res.ok) {
+                log('Qeydiyyat uğurlu!');
+                alert('Qeydiyyat uğurlu! İndi login olun.');
+            } else {
+                const err = await res.text();
+                log('Qeydiyyat xətası: ' + err);
+                alert('Xəta: ' + err);
+            }
+        } catch (err) {
+            log('Qeydiyyat exception: ' + err.message);
+            alert('Xəta: ' + err.message);
+        }
+    }
+
+    async function login() {
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passwordInput').value;
+
+        if (!email || !password) {
+            alert('Email və password daxil edin!');
+            return;
+        }
+
+        try {
+            log('Login başladı...');
+            const res = await fetch(API_URL + '/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: email, password: password})
+            });
+
+            const data = await res.json();
+            token = data.accessToken;
+            currentUser = data.user;
+
+            log('Login uğurlu! User ID: ' + currentUser.id);
+
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('userName').textContent =
+                currentUser.firstName + ' ' + currentUser.lastName + ' (' + currentUser.email + ')';
+
+            alert('Login uğurlu!');
+            loadChatRooms();
+        } catch (err) {
+            log('Login xətası: ' + err.message);
+            alert('Xəta: ' + err.message);
+        }
+    }
+
+    async function testServerConnection() {
+        log('Server əlaqəsi yoxlanılır...');
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/login', {
+                method: 'OPTIONS'
+            });
+            log('✓ Server əlaqəsi var (HTTP)');
+            return true;
+        } catch (err) {
+            log('✗ Server əlaqə xətası: ' + err.message);
+            log('❌ Backend server işləmir! Port 8080-də server başlatın.');
+            alert('XƏTA: Backend server işləmir!\n\nhttp://localhost:8080 ünvanında server tapılmadı.\n\nLütfən Spring Boot aplikasiyanızı başladın.');
+            return false;
+        }
+    }
+
+    async function connectWebSocket() {
+        if (!token) {
+            alert('Əvvəlcə login olun!');
+            log('WebSocket bağlantı cəhdi: Token yoxdur!');
+            return;
+        }
+
+        if (stompClient && stompClient.connected) {
+            log('WebSocket artıq bağlıdır!');
+            alert('WebSocket artıq bağlıdır!');
+            return;
+        }
+
+        // Əvvəlcə server əlaqəsini yoxla
+        const serverOk = await testServerConnection();
+        if (!serverOk) {
+            return;
+        }
+
+        try {
+            log('WebSocket bağlantısı başlayır...');
+            log('WS URL: ' + WS_URL);
+            updateWSStatus('connecting');
+
+            // SockJS options
+            const sockjsOptions = {
+                transports: ['websocket', 'xhr-streaming', 'xhr-polling']
+            };
+
+            const socket = new SockJS(WS_URL, null, sockjsOptions);
+
+            socket.onopen = function() {
+                log('✓ SockJS socket açıldı');
+            };
+
+            socket.onerror = function(err) {
+                log('✗ SockJS xətası: ' + JSON.stringify(err));
+            };
+
+            socket.onclose = function(e) {
+                log('SockJS bağlandı. Kod: ' + e.code + ', Səbəb: ' + e.reason);
+            };
+
+            stompClient = Stomp.over(socket);
+
+            stompClient.debug = function(str) {
+                log('STOMP: ' + str);
+            };
+
+            const headers = {
+                'Authorization': 'Bearer ' + token
+            };
+
+            log('STOMP connect çağırılır...');
+            log('Token: ' + token.substring(0, 20) + '...');
+
+            stompClient.connect(
+                headers,
+                function(frame) {
+                    log('✓ WebSocket bağlandı!');
+                    log('Frame: ' + JSON.stringify(frame));
+                    updateWSStatus('connected');
+                    alert('WebSocket bağlantısı uğurlu!');
+
+                    if (selectedRoom) {
+                        log('Seçilmiş otağa subscribe olunur: ' + selectedRoom.id);
+                        subscribeToRoom(selectedRoom.id);
+                    }
+                },
+                function(error) {
+                    log('✗ WebSocket xətası: ' + JSON.stringify(error));
+                    console.error('WebSocket xətası:', error);
+                    updateWSStatus('disconnected');
+
+                    let errorMsg = 'WebSocket bağlantı xətası!\n\n';
+                    errorMsg += 'Səbəblər:\n';
+                    errorMsg += '1. Backend /ws endpoint mövcud deyil\n';
+                    errorMsg += '2. CORS konfiqurasiyası düzgün deyil\n';
+                    errorMsg += '3. WebSocket konfiqurasiyası yoxdur\n';
+                    errorMsg += '4. Token düzgün deyil\n\n';
+                    errorMsg += 'Console log-a baxın və backend-i yoxlayın.';
+
+                    alert(errorMsg);
+                }
+            );
+        } catch (err) {
+            log('✗ WebSocket exception: ' + err.message);
+            console.error('WebSocket exception:', err);
+            updateWSStatus('disconnected');
+            alert('WebSocket xətası: ' + err.message);
+        }
+    }
+
+    function disconnectWebSocket() {
+        if (stompClient && stompClient.connected) {
+            log('WebSocket bağlantısı kəsilir...');
+            stompClient.disconnect(function() {
+                log('WebSocket bağlantısı kəsildi');
+                updateWSStatus('disconnected');
+            });
+            stompClient = null;
+            currentSubscription = null;
+        } else {
+            log('WebSocket bağlı deyil');
+        }
+    }
+
+    function updateWSStatus(status) {
+        const statusEl = document.getElementById('wsStatus');
+        statusEl.className = 'ws-status ' + status;
+
+        if (status === 'connected') {
+            statusEl.textContent = 'Connected ✓';
+        } else if (status === 'connecting') {
+            statusEl.textContent = 'Connecting...';
+        } else {
+            statusEl.textContent = 'Disconnected';
+        }
+    }
+
+    function subscribeToRoom(roomId) {
+        if (!stompClient || !stompClient.connected) {
+            log('Subscribe xətası: STOMP bağlı deyil');
+            return;
+        }
+
+        if (currentSubscription) {
+            log('Əvvəlki subscription ləğv edilir');
+            currentSubscription.unsubscribe();
+        }
+
+        const topic = '/topic/chat-room.' + roomId;  // /topic/chat/ -> /topic/chat-room.
+        log('Subscribe olunur: ' + topic);
+
+        try {
+            currentSubscription = stompClient.subscribe(topic, function(message) {
+                log('🎉 Yeni mesaj alındı: ' + message.body);
+                const newMsg = JSON.parse(message.body);
+                messages.push(newMsg);
+                renderMessages();
+            });
+            log('✓ Subscribe uğurlu!');
+        } catch (err) {
+            log('✗ Subscribe xətası: ' + err.message);
+            console.error('Subscribe xətası:', err);
+        }
+    }
+
+    async function loadChatRooms() {
+        if (!token) return;
+
+        try {
+            log('Chat otaqları yüklənir...');
+            const res = await fetch(API_URL + '/chatRooms/my', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            chatRooms = await res.json();
+            log('✓ ' + chatRooms.length + ' otaq yükləndi');
+            renderRooms();
+        } catch (err) {
+            log('✗ Otaq yükləmə xətası: ' + err.message);
+            console.error('Xəta:', err);
+        }
+    }
+
+    async function createChatRoom() {
+        if (!token) {
+            alert('Login olun!');
+            return;
+        }
+
+        try {
+            log('Yeni chat otağı yaradılır...');
+            const res = await fetch(API_URL + '/chatRooms/create', {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            const newRoom = await res.json();
+            chatRooms.push(newRoom);
+            log('✓ Yeni otaq yaradıldı: #' + newRoom.id);
+            renderRooms();
+            selectRoom(newRoom);
+            alert('Chat otağı yaradıldı!');
+        } catch (err) {
+            log('✗ Otaq yaratma xətası: ' + err.message);
+            alert('Xəta: ' + err.message);
+        }
+    }
+
+    async function loadMessages(roomId) {
+        if (!token) return;
+
+        try {
+            log('Mesajlar yüklənir: otaq #' + roomId);
+            const res = await fetch(API_URL + '/chat-messages/room/' + roomId, {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            messages = await res.json();
+            log('✓ ' + messages.length + ' mesaj yükləndi');
+            renderMessages();
+        } catch (err) {
+            log('✗ Mesaj yükləmə xətası: ' + err.message);
+            console.error('Xəta:', err);
+            messages = [];
+            renderMessages();
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+
+        if (!message) {
+            log('Boş mesaj göndərilə bilməz');
+            return;
+        }
+
+        if (!selectedRoom) {
+            alert('Otaq seçin!');
+            log('Mesaj göndərmə xətası: Otaq seçilməyib');
+            return;
+        }
+
+        if (!stompClient || !stompClient.connected) {
+            alert('WebSocket bağlantısı yoxdur!');
+            log('Mesaj göndərmə xətası: WebSocket bağlı deyil');
+            return;
+        }
+
+        try {
+            const destination = '/app/chat.send';
+            const headers = {};
+
+            const payload = JSON.stringify({
+                chatRoomId: selectedRoom.id,
+                userId: currentUser.id,
+                message: message
+            });
+
+            log('🚀 Mesaj göndərilir...');
+            log('Destination: ' + destination);
+            log('Payload: ' + payload);
+
+            stompClient.send(destination, headers, payload);
+            log('✓ Mesaj serverə göndərildi (gözlənilir...)');
+
+            input.value = '';
+
+            // Fallback: Əgər 3 saniyə ərzində WebSocket-dən gəlməzsə, REST API-dən yenilə
+            setTimeout(async function() {
+                log('⏰ 3 saniyə keçdi, mesajlar yenilənir...');
+                await loadMessages(selectedRoom.id);
+            }, 3000);
+
+        } catch (err) {
+            log('✗ Mesaj göndərmə xətası: ' + err.message);
+            console.error('Mesaj göndərmə xətası:', err);
+            alert('Mesaj göndərilə bilmədi: ' + err.message);
+        }
+    }
+
+    async function closeRoom() {
+        if (!selectedRoom || !token) return;
+
+        try {
+            log('Chat bağlanır: #' + selectedRoom.id);
+            await fetch(API_URL + '/chatRooms/' + selectedRoom.id + '/close', {
+                method: 'PUT',
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            log('✓ Chat bağlandı');
+            alert('Chat bağlandı!');
+
+            if (currentSubscription) {
+                currentSubscription.unsubscribe();
+                currentSubscription = null;
+            }
+
+            selectedRoom = null;
+            loadChatRooms();
+            document.getElementById('chatPanel').innerHTML = '<div class="empty-state"><div><p style="font-size: 24px; margin-bottom: 10px;">💬</p><p>Chat otağı seçin</p></div></div>';
+        } catch (err) {
+            log('✗ Chat bağlama xətası: ' + err.message);
+            alert('Xəta: ' + err.message);
+        }
+    }
+
+    function selectRoom(room) {
+        log('Otaq seçildi: #' + room.id);
+        selectedRoom = room;
+        renderRooms();
+        loadMessages(room.id);
+        renderChatPanel();
+
+        if (stompClient && stompClient.connected) {
+            subscribeToRoom(room.id);
+        } else {
+            log('WebSocket bağlı deyil, subscribe edilmədi');
+        }
+    }
+
+    function renderRooms() {
+        const list = document.getElementById('roomsList');
+
+        if (chatRooms.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: #999; padding: 40px 0;">Chat otağı yoxdur</div>';
+            return;
+        }
+
+        let html = '';
+        for (let i = 0; i < chatRooms.length; i++) {
+            const room = chatRooms[i];
+            const isActive = selectedRoom && selectedRoom.id === room.id;
+            html += '<div class="room-item ' + (isActive ? 'active' : '') + '" onclick="selectRoomById(' + room.id + ')">';
+            html += '<strong>Otaq #' + room.id + '</strong>';
+            html += '<small>User: ' + (room.userFullName || 'N/A') + '</small><br>';
+            html += '<small>Status: ' + room.status + '</small>';
+            html += '</div>';
+        }
+        list.innerHTML = html;
+    }
+
+    function selectRoomById(roomId) {
+        const room = chatRooms.find(function(r) { return r.id === roomId; });
+        if (room) selectRoom(room);
+    }
+
+    function renderChatPanel() {
+        const panel = document.getElementById('chatPanel');
+        panel.innerHTML = '<div class="chat-header"><div><h2>Chat Otağı #' + selectedRoom.id + '</h2><small>Status: ' + selectedRoom.status + '</small></div><button class="btn-close" onclick="closeRoom()">✕</button></div><div class="messages-area" id="messagesArea"></div><div class="message-input"><div class="message-input-row"><input type="text" id="messageInput" placeholder="Mesajınızı yazın..." onkeypress="if(event.key===\'Enter\') sendMessage()"><button class="btn-send" onclick="sendMessage()">Göndər</button></div><small style="color: #999; margin-top: 8px; display: block;">WebSocket ilə real-time mesajlaşma</small></div>';
+        renderMessages();
+    }
+
+    function renderMessages() {
+        const area = document.getElementById('messagesArea');
+        if (!area) return;
+
+        if (messages.length === 0) {
+            area.innerHTML = '<div style="text-align: center; color: #999; padding: 80px 0;">Mesaj yoxdur</div>';
+            return;
+        }
+
+        let html = '';
+        for (let i = 0; i < messages.length; i++) {
+            const msg = messages[i];
+            const isSent = currentUser && msg.senderId === currentUser.id;
+            const msgClass = isSent ? 'sent' : 'received';
+            const time = new Date(msg.sentAt).toLocaleTimeString('az-AZ');
+
+            html += '<div class="message ' + msgClass + '">';
+            html += '<div class="message-bubble">';
+            html += '<div class="message-sender">' + msg.senderFullName + '</div>';
+            html += '<div>' + msg.message + '</div>';
+            html += '<div class="message-time">' + time + '</div>';
+            html += '</div></div>';
+        }
+
+        area.innerHTML = html;
+        area.scrollTop = area.scrollHeight;
+    }
+
+    log('Interface yükləndi');
+</script>
+</body>
+</html>

@@ -17,6 +17,7 @@ public class VoucherUsageResponse {
     private Long id;
     private String voucherCode;
     private Long userId;
+    private String userName;
     private Long orderId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

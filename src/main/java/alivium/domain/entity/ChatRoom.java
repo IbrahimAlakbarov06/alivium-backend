@@ -1,5 +1,6 @@
 package alivium.domain.entity;
 
+import alivium.model.enums.ChatStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -7,31 +8,30 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_messages")
+@Table(name = "chat_rooms")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatMessage {
+public class ChatRoom {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_id", nullable = false)
-    private ChatRoom chatRoom;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")
-    private User sender;
+    @JoinColumn(name = "admin_id")
+    private User admin;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String message;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChatStatus status;
 
     @CreationTimestamp
-    private LocalDateTime sentAt;
-
-    @Column(nullable = false)
-    private boolean read = false;
+    private LocalDateTime createdAt;
 }

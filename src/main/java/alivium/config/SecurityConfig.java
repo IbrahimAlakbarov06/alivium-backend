@@ -38,7 +38,10 @@ public class SecurityConfig {
                                 "/api/categories/name/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/websocket/**",
+                                "/api/chatRooms/**",
+                                "/api/chat-messages/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
