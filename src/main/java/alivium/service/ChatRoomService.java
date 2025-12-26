@@ -13,4 +13,5 @@ public interface ChatRoomService {
     ChatRoomResponse getById(Long chatRoomId);
     ChatRoomResponse markResolved(Long chatRoomId, Long userId);
     List<ChatRoomResponse> getChatRoomsByStatus(Long userId, ChatStatus status);
+    List<ChatRoomResponse> findAllByAdminIsNull();
 }

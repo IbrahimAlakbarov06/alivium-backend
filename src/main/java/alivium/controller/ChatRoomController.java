@@ -70,5 +70,13 @@ public class ChatRoomController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/open/admin-null")
+    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN_ROLE')")
+    public ResponseEntity<List<ChatRoomResponse>> getAllOpenRoomsWithoutAdmin() {
+        List<ChatRoomResponse> response = chatRoomService.findAllByAdminIsNull();
+        return ResponseEntity.ok(response);
+    }
+
+
 }
 

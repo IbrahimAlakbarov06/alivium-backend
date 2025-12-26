@@ -37,6 +37,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Transactional
     @Override
+    @CacheEvict(value = "chatRooms", allEntries = true)
     public ChatRoomResponse createChatRoom(Long userId) {
         User user = findUserById(userId);
 
@@ -151,6 +152,17 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return list.stream()
                 .map(chatRoomMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    @Cacheable(value = "chatRooms", key = "'ADMIN_NULL_OPEN'")
+    public List<ChatRoomResponse> findAllByAdminIsNull() {
+        return chatRoomRepository
+                .findAllByAdminIsNullAndStatus(ChatStatus.OPEN)
+                .stream()
+                .map(chatRoomMapper::toResponse)
+                .toList();
     }
 
     @Scheduled(fixedRate = 60000)
