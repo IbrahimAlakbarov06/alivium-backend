@@ -53,7 +53,6 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "feedbacks", key = "'all_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<FeedbackAdminResponse> getAllFeedbacks(Pageable pageable) {
         return feedbackRepository.findAll(pageable)
                 .map(feedbackMapper::toAdminResponse);
@@ -70,20 +69,20 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "feedbacks", key = "'status_' + #status")
-    public List<FeedbackResponse> findFeedbackByStatus(FeedbackStatus status) {
+    public List<FeedbackAdminResponse> findFeedbackByStatus(FeedbackStatus status) {
         List<Feedback> feedbacks = feedbackRepository.findByStatus(status);
         return feedbacks.stream()
-                .map(feedbackMapper::toResponse)
+                .map(feedbackMapper::toAdminResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "feedbacks", key = "'type_' + #type")
-    public List<FeedbackResponse> findFeedbackByType(FeedbackType type) {
+    public List<FeedbackAdminResponse> findFeedbackByType(FeedbackType type) {
         List<Feedback> feedbacks = feedbackRepository.findByType(type);
         return feedbacks.stream()
-                .map(feedbackMapper::toResponse)
+                .map(feedbackMapper::toAdminResponse)
                 .collect(Collectors.toList());
     }
 

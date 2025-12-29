@@ -19,9 +19,9 @@ public interface FeedbackService {
 
     FeedbackAdminResponse getFeedbackById(Long id);
 
-    List<FeedbackResponse> findFeedbackByStatus(FeedbackStatus status);
+    List<FeedbackAdminResponse> findFeedbackByStatus(FeedbackStatus status);
 
-    List<FeedbackResponse> findFeedbackByType(FeedbackType type);
+    List<FeedbackAdminResponse> findFeedbackByType(FeedbackType type);
 
     void updateFeedbackStatus(Long id, FeedbackStatus status);
 
