@@ -1,20 +1,24 @@
 package alivium.mapper;
 
 import alivium.domain.entity.Feedback;
+import alivium.domain.entity.User;
 import alivium.model.dto.request.FeedbackRequest;
 import alivium.model.dto.response.FeedbackAdminResponse;
 import alivium.model.dto.response.FeedbackResponse;
+import alivium.model.enums.FeedbackStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 public class FeedbackMapper {
-    public Feedback toEntity(FeedbackRequest request) {
+    public Feedback toEntity(FeedbackRequest request, User user) {
         if(request == null) return null;
 
         return Feedback.builder()
                 .type(request.getType())
                 .comment(request.getComment())
                 .rating(request.getRating())
+                .status(FeedbackStatus.NEW)
+                .user(user)
                 .build();
     }
 
