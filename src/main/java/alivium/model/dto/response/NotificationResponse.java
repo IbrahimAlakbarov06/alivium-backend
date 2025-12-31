@@ -23,7 +23,6 @@ public class NotificationResponse {
     private NotificationType type;
     private NotificationStatus status;
     private String imageUrl;
-    private String deepLink;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

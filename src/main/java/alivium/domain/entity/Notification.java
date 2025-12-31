@@ -1,6 +1,5 @@
 package alivium.domain.entity;
 
-import alivium.model.enums.NotificationPriority;
 import alivium.model.enums.NotificationStatus;
 import alivium.model.enums.NotificationType;
 import jakarta.persistence.*;
