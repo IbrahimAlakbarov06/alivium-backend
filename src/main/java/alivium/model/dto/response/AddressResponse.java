@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AddressResponse {
     private Long id;
+    private Long userId;
     private String fullName;
     private String phone;
     private String country;

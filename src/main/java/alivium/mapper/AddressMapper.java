@@ -18,6 +18,13 @@ public interface AddressMapper {
 
     AddressResponse toResponse(Address address);
 
+    @AfterMapping
+    default void setUserId(Address address,@MappingTarget AddressResponse response) {
+        if(address.getUser() != null) {
+            response.setUserId(address.getUser().getId());
+        }
+    }
+
     List<AddressResponse> toListResponse(List<Address> addressList);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
