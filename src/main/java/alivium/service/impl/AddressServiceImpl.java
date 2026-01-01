@@ -3,6 +3,7 @@ package alivium.service.impl;
 import alivium.domain.entity.Address;
 import alivium.domain.entity.User;
 import alivium.domain.repository.AddressRepository;
+import alivium.domain.repository.UserRepository;
 import alivium.exception.NotFoundException;
 import alivium.mapper.AddressMapper;
 import alivium.model.dto.request.AddressRequest;
@@ -23,13 +24,13 @@ import java.util.List;
 @Slf4j
 public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
-    private final UserServiceImpl userService;
+    private final UserRepository userRepository;
     private final AddressMapper addressMapper;
 
     @Transactional
     @CacheEvict(value = "addresses", allEntries = true)
     public AddressResponse createAddress(Long userId, AddressRequest request) {
-        User user = userService.findById(userId);
+        User user = findUserById(userId);
 
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             resetUserDefaultAddresses(userId);
@@ -115,7 +116,12 @@ public class AddressServiceImpl implements AddressService {
 
     private Address findUserAddressOrThrow(Long userId, Long addressId) {
         return addressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new NotFoundException("Address not found with id: " + addressId));
+                .orElseThrow(() -> new NotFoundException("No address matched with id: " + addressId + " for user: " + userId));
+    }
+
+    private User findUserById(Long id){
+        return userRepository.findById(id)
+                .orElseThrow(()->new NotFoundException("User not found with id: "+id));
     }
 
 }
