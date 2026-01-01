@@ -16,4 +16,5 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     List<ChatRoom> findByUserAndStatus(User user, ChatStatus status);
     List<ChatRoom> findByAdminAndStatus(User admin, ChatStatus status);
     boolean existsByUserAndStatus(User user, ChatStatus chatStatus);
+    List<ChatRoom> findAllByAdminIsNullAndStatus(ChatStatus status);
 }
