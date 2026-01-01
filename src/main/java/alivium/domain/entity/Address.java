@@ -2,17 +2,15 @@ package alivium.domain.entity;
 
 import alivium.model.enums.AddressType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "addresses")
@@ -22,8 +20,8 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id",nullable = false)
     private User user;
 
     @Column(nullable = false)
@@ -35,7 +33,9 @@ public class Address {
     @Column(nullable = false)
     private String country;
 
+    @Column(nullable = false)
     private String city;
+
     private String district;
     private String street;
     private String zipCode;
