@@ -1,5 +1,6 @@
 package alivium.service.impl;
 
+import alivium.domain.entity.User;
 import alivium.domain.entity.Voucher;
 import alivium.domain.repository.VoucherRepository;
 import alivium.exception.AlreadyExistsException;
@@ -9,8 +10,11 @@ import alivium.mapper.VoucherMapper;
 import alivium.model.dto.request.VoucherRequest;
 import alivium.model.dto.response.VoucherResponse;
 import alivium.model.enums.DiscountType;
+import alivium.model.enums.NotificationTemplate;
+import alivium.service.NotificationTemplateService;
 import alivium.service.VoucherService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -18,15 +22,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepo;
     private final VoucherMapper voucherMapper;
+    private final NotificationTemplateService notificationTemplateService;
 
     @Override
     @Transactional
@@ -125,6 +134,47 @@ public class VoucherServiceImpl implements VoucherService {
             throw new IllegalStateException("Order total does not meet minimum requirement for this voucher");
         }
         return voucherMapper.toResponse(voucher);
+    }
+
+    @Override
+    public void sendVoucherToAll(Long voucherId){
+        Voucher voucher = findById(voucherId);
+
+        String discountValue = voucher.getType() == DiscountType.PERCENTAGE
+                ? voucher.getDiscountValue().toString()
+                : "Special";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("discount", discountValue);
+        params.put("voucherCode", voucher.getCode());
+        params.put("expiryDate", voucher.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+        notificationTemplateService.sendNotificationToAll(NotificationTemplate.NEW_VOUCHER, params);
+    }
+
+    @Override
+    public void sendWelcomeNotificationWithVoucher(User user) {
+        Voucher welcomeVoucher = voucherRepo.findByCode("WELCOME10").orElse(null);
+
+        String discount = "10";
+        String voucherCode = "WELCOME10";
+
+        if (welcomeVoucher != null && welcomeVoucher.getIsActive()) {
+            discount = welcomeVoucher.getDiscountValue().toString();
+            voucherCode = welcomeVoucher.getCode();
+        } else {
+            log.warn("WELCOME10 voucher not found in database for user: {}", user.getEmail());
+        }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("discount", discount);
+        params.put("voucherCode", voucherCode);
+
+        notificationTemplateService.sendNotification(
+                user,
+                NotificationTemplate.WELCOME_NEW_USER,
+                params
+        );
     }
 
     private Voucher findById(Long voucherId) {

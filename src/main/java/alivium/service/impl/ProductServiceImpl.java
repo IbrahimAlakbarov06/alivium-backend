@@ -4,6 +4,7 @@ import alivium.domain.entity.*;
 import alivium.domain.repository.CategoryRepository;
 import alivium.domain.repository.CollectionRepository;
 import alivium.domain.repository.ProductRepository;
+import alivium.domain.repository.WishlistRepository;
 import alivium.exception.AlreadyExistsException;
 import alivium.exception.NotFoundException;
 import alivium.mapper.ProductMapper;
@@ -11,6 +12,8 @@ import alivium.mapper.ProductVariantMapper;
 import alivium.model.dto.request.ProductCreateRequest;
 import alivium.model.dto.request.ProductUpdateRequest;
 import alivium.model.dto.response.ProductResponse;
+import alivium.model.enums.NotificationTemplate;
+import alivium.service.NotificationTemplateService;
 import alivium.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,7 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +35,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final CategoryRepository categoryRepository;
     private final CollectionRepository collectionRepository;
+    private final NotificationTemplateService notificationTemplateService;
+    private final WishlistRepository wishlistRepository;
 
     @Override
     @Transactional
@@ -45,6 +53,13 @@ public class ProductServiceImpl implements ProductService {
         productMapper.setProductRelationsFromRequest(request,product);
 
         Product savedProduct=productRepository.save(product);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("productName", product.getName());
+        params.put("price", product.getPrice().toString());
+
+        notificationTemplateService.sendNotificationToAll(NotificationTemplate.NEW_ARRIVAL, params);
+
         return productMapper.toResponse(savedProduct);
     }
 
@@ -128,14 +143,16 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateProductDiscountPrice(Long productId, BigDecimal discountPrice) {
         Product product = findById(productId);
 
-        if (discountPrice != null) {
-            if (discountPrice.compareTo(product.getPrice()) > 0) {
-                throw new IllegalArgumentException("Discount price cannot be greater than the original price");
-            }
+        if (discountPrice != null && discountPrice.compareTo(product.getPrice()) > 0) {
+            throw new IllegalArgumentException("Discount price cannot be greater than the original price");
         }
 
         product.setDiscountPrice(discountPrice);
         Product updatedProduct = productRepository.save(product);
+
+        if (discountPrice != null) {
+            sendWishlistPriceDropNotification(product, discountPrice);
+        }
 
         return productMapper.toResponse(updatedProduct);
     }
@@ -149,6 +166,33 @@ public class ProductServiceImpl implements ProductService {
 
         Product updatedProduct = productRepository.save(product);
         return productMapper.toResponse(updatedProduct);
+    }
+
+    private void sendWishlistPriceDropNotification(Product product, BigDecimal newPrice) {
+        List<Wishlist> wishlists = wishlistRepository.findByProductId(product.getId());
+
+        if (wishlists.isEmpty()){
+            return;
+        }
+
+        BigDecimal oldPrice = product.getPrice();
+        double discountPercent = oldPrice.subtract(newPrice)
+                .divide(oldPrice, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .doubleValue();
+
+        for (Wishlist wishlist : wishlists) {
+            Map<String, String> params = new HashMap<>();
+            params.put("productName", product.getName());
+            params.put("price", newPrice.toString());
+            params.put("discount", String.format("%.0f", discountPercent));
+
+            notificationTemplateService.sendNotification(
+                    wishlist.getUser(),
+                    NotificationTemplate.WISHLIST_ITEM_ON_SALE,
+                    params
+            );
+        }
     }
 
     private Product findById(Long id){

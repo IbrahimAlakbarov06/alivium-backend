@@ -2,8 +2,10 @@ package alivium.service.impl;
 
 import alivium.domain.entity.Product;
 import alivium.domain.entity.ProductVariant;
+import alivium.domain.entity.Wishlist;
 import alivium.domain.repository.ProductRepository;
 import alivium.domain.repository.ProductVariantRepository;
+import alivium.domain.repository.WishlistRepository;
 import alivium.exception.AlreadyExistsException;
 import alivium.exception.BusinessException;
 import alivium.exception.NotFoundException;
@@ -11,6 +13,8 @@ import alivium.mapper.ProductVariantMapper;
 import alivium.model.dto.request.ProductVariantRequest;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.ProductVariantResponse;
+import alivium.model.enums.NotificationTemplate;
+import alivium.service.NotificationTemplateService;
 import alivium.service.ProductVariantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -18,7 +22,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +33,8 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final ProductVariantMapper variantMapper;
     private final ProductVariantRepository variantRepository;
     private final ProductRepository productRepository;
+    private final WishlistRepository wishlistRepository;
+    private final NotificationTemplateService notificationTemplateService;
 
     @Transactional
     @CacheEvict(value = "variants", allEntries = true)
@@ -161,6 +169,20 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         variant.setAvailable(true);
 
         ProductVariant updatedVariant = variantRepository.save(variant);
+
+        if (variant.getStockQuantity()==0){
+            Product product =variant.getProduct();
+            List<Wishlist> wishlists= wishlistRepository.findByProductId(product.getId());
+
+            for (Wishlist wishlist : wishlists) {
+                Map<String, String> params = new HashMap<>();
+                params.put("productName", product.getName());
+                params.put("price", product.getPrice().toString());
+
+                notificationTemplateService.sendNotification(wishlist.getUser(), NotificationTemplate.WISHLIST_ITEM_BACK_IN_STOCK, params);
+            }
+        }
+
         return variantMapper.toResponse(updatedVariant);
     }
 

@@ -1,7 +1,9 @@
 package alivium.service;
 
 import alivium.domain.entity.User;
+import alivium.domain.entity.Voucher;
 import alivium.domain.repository.UserRepository;
+import alivium.domain.repository.VoucherRepository;
 import alivium.exception.AlreadyExistsException;
 import alivium.exception.BusinessException;
 import alivium.exception.InvalidInputException;
@@ -11,6 +13,7 @@ import alivium.model.dto.request.*;
 import alivium.model.dto.response.AuthResponse;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.enums.AuthProvider;
+import alivium.model.enums.NotificationTemplate;
 import alivium.model.enums.UserStatus;
 import alivium.security.JwtService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -19,6 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -32,6 +37,7 @@ public class AuthService {
     private final RedisService redisService;
     private final EmailService emailService;
     private final GoogleAuthService googleAuthService;
+    private final VoucherService voucherService;
 
     @Transactional
     public MessageResponse register(RegisterRequest request) {
@@ -71,6 +77,8 @@ public class AuthService {
         redisService.deleteVerificationCode(user.getEmail());
 
         emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
+
+        voucherService.sendWelcomeNotificationWithVoucher(user);
 
         String accessToken = jwtService.generateToken(user.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());

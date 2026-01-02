@@ -1,5 +1,6 @@
 package alivium.service;
 
+import alivium.domain.entity.User;
 import alivium.model.dto.request.VoucherRequest;
 import alivium.model.dto.response.VoucherResponse;
 
@@ -15,5 +16,7 @@ public interface VoucherService {
     VoucherResponse getVoucherByCode(String code);
     VoucherResponse toggleVoucherStatus(Long voucherId, boolean isActive);
     VoucherResponse validateVoucher(String code, Double orderTotal);
+    void sendVoucherToAll(Long voucherId);
+    void sendWelcomeNotificationWithVoucher(User user);
 }
 
