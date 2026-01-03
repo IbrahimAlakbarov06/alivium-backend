@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
@@ -13,7 +12,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
     List<Wishlist> findByUserIdOrderByAddedAtDesc(Long userId);
 
-    Optional<Wishlist> findByProductIdAndUserId(Long productId, Long userId);
+    List<Wishlist> findByProductId(Long productId);
 
     @Query("select count(w) from Wishlist w where w.user.id=:userId")
     Long countByUserId(Long userId);

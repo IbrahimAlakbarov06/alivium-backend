@@ -4,6 +4,7 @@ import alivium.domain.entity.Notification;
 import alivium.domain.entity.User;
 import alivium.model.dto.request.NotificationRequest;
 import alivium.model.dto.response.NotificationResponse;
+import alivium.model.enums.NotificationStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class NotificationMapper {
                 .title(request.getTitle())
                 .message(request.getMessage())
                 .type(request.getType())
+                .status(NotificationStatus.UNREAD)
                 .imageUrl(request.getImageUrl())
                 .build();
     }

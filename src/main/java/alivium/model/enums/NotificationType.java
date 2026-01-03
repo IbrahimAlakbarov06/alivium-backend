@@ -10,6 +10,7 @@ public enum NotificationType {
     NEW_ARRIVAL,
     PRICE_DROP,
     BACK_IN_STOCK,
+    WISHLIST_ITEM,
     VOUCHER,
     SYSTEM
 }
