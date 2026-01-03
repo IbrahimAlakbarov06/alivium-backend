@@ -2,14 +2,12 @@ package alivium.controller;
 
 import alivium.domain.entity.User;
 import alivium.model.dto.request.FCMTokenRequest;
-import alivium.model.dto.request.NotificationRequest;
 import alivium.model.dto.response.MessageResponse;
 import alivium.model.dto.response.NotificationResponse;
 import alivium.service.NotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,13 +19,6 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationService notificationService;
-
-    @PostMapping("/send")
-    @PreAuthorize("hasAuthority('ADMIN_ROLE') or hasAuthority('SUPER_ADMIN_ROLE')")
-    public ResponseEntity<NotificationResponse> sendNotification(
-            @Valid @RequestBody NotificationRequest request) {
-        return ResponseEntity.ok(notificationService.createNotification(request));
-    }
 
     @GetMapping("/my")
     public ResponseEntity<List<NotificationResponse>> getMyNotifications(@AuthenticationPrincipal User user){

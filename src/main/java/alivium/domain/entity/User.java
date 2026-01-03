@@ -79,6 +79,10 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<Notification> notifications = new HashSet<>();
+
     @OneToMany(mappedBy ="user")
     @JsonIgnore
     private List<ChatRoom> chatRooms;

@@ -165,12 +165,14 @@ public class ProductVariantServiceImpl implements ProductVariantService {
             throw new BusinessException("Quantity must be positive");
         }
 
+        int previousStock = variant.getStockQuantity();
+
         variant.setStockQuantity(variant.getStockQuantity()+quantity);
         variant.setAvailable(true);
 
         ProductVariant updatedVariant = variantRepository.save(variant);
 
-        if (variant.getStockQuantity()==0){
+        if (previousStock==0 && variant.getStockQuantity()>0){
             Product product =variant.getProduct();
             List<Wishlist> wishlists= wishlistRepository.findByProductId(product.getId());
 
