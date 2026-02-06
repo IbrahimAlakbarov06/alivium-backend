@@ -1,5 +1,7 @@
 package alivium.domain.entity;
 
+import alivium.model.enums.PaymentMethod;
+import alivium.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,4 +20,12 @@ public class Payment {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false, unique = true)
     private Order order;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethod paymentMethod;
 }
