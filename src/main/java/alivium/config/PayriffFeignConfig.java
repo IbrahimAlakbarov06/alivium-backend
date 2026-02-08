@@ -14,7 +14,7 @@ public class PayriffFeignConfig {
     @Bean
     public RequestInterceptor authInterceptor(){
         return template->{
-            template.header("Authorization", properties.getSecretKey());
+            template.header("Authorization", properties.getSecretKey().trim());
             template.header("Content-Type", "application/json");
         };
     }
