@@ -2,10 +2,7 @@ package alivium.domain.entity;
 
 import alivium.model.enums.CardType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,11 +10,13 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "payment_cards")
 @Builder
+@Table(name = "payment_cards")
+@ToString(exclude = "user")
 public class PaymentCard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +37,7 @@ public class PaymentCard {
     private CardType cardType=CardType.UNKNOWN;
 
     @Column(name = "is_default", nullable = false)
-    private boolean isDefault = false;
+    private Boolean isDefault = false;
 
     private Integer expiryMonth;
     private Integer expiryYear;
