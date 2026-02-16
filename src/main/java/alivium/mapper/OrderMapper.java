@@ -152,7 +152,7 @@ public class OrderMapper {
     }
 
 
-    private String formatAddress(Address address) {
+    public String formatAddress(Address address) {
         if (address == null) {
             return null;
         }
