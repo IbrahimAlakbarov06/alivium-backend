@@ -9,7 +9,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -42,9 +44,15 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Payment payment;
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Payment> payments = new ArrayList<>();
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Shipping shipping;
@@ -93,12 +101,12 @@ public class Order {
         item.setOrder(null);
     }
 
-    public void setPayment(Payment payment) {
-        this.payment = payment;
-        if (payment != null) {
-            payment.setOrder(this);
-        }
-    }
+//    public void setPayment(Payment payment) {
+//        this.payment = payment;
+//        if (payment != null) {
+//            payment.setOrder(this);
+//        }
+//    }
 
     public void setShipping(Shipping shipping) {
         this.shipping = shipping;
