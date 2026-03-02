@@ -181,8 +181,4 @@ public class OrderMapper {
     private String generateOrderNumber() {
         return "ORD" + System.currentTimeMillis();
     }
-
-    private String generateTrackingNumber() {
-        return "IK" + System.currentTimeMillis();
-    }
 }
