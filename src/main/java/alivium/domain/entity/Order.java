@@ -34,6 +34,7 @@ public class Order {
     private User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<OrderItem> orderItems=new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

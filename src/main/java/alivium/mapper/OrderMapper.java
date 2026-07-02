@@ -152,7 +152,7 @@ public class OrderMapper {
     }
 
 
-    private String formatAddress(Address address) {
+    public String formatAddress(Address address) {
         if (address == null) {
             return null;
         }
@@ -180,9 +180,5 @@ public class OrderMapper {
 
     private String generateOrderNumber() {
         return "ORD" + System.currentTimeMillis();
-    }
-
-    private String generateTrackingNumber() {
-        return "IK" + System.currentTimeMillis();
     }
 }
