@@ -378,8 +378,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script>
-    const API_URL = 'http://localhost:8080/api';
-    const WS_URL = 'http://localhost:8080/websocket'; // /ws -> /websocket
+    // ✅ NGROK URL - DƏYİŞDİRİLDİ
+    const API_URL = 'https://irrefragably-overcured-clyde.ngrok-free.dev/api';
+    const WS_URL = 'https://irrefragably-overcured-clyde.ngrok-free.dev/websocket';
 
     let token = null;
     let currentUser = null;
@@ -446,11 +447,20 @@
 
         try {
             log('Login başladı...');
+            log('URL: ' + API_URL + '/auth/login');
+
             const res = await fetch(API_URL + '/auth/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({email: email, password: password})
             });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                log('Login xətası: ' + res.status + ' - ' + errorText);
+                alert('Login xətası: ' + errorText);
+                return;
+            }
 
             const data = await res.json();
             token = data.accessToken;
@@ -472,16 +482,19 @@
 
     async function testServerConnection() {
         log('Server əlaqəsi yoxlanılır...');
+        log('Test URL: ' + API_URL + '/auth/login');
+
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
+            // ✅ DÜZƏLDİLDİ: ngrok URL istifadə edir
+            const response = await fetch(API_URL + '/auth/login', {
                 method: 'OPTIONS'
             });
             log('✓ Server əlaqəsi var (HTTP)');
             return true;
         } catch (err) {
             log('✗ Server əlaqə xətası: ' + err.message);
-            log('❌ Backend server işləmir! Port 8080-də server başlatın.');
-            alert('XƏTA: Backend server işləmir!\n\nhttp://localhost:8080 ünvanında server tapılmadı.\n\nLütfən Spring Boot aplikasiyanızı başladın.');
+            log('❌ Backend server işləmir!');
+            alert('XƏTA: Backend server işləmir!\n\n' + API_URL + ' ünvanında server tapılmadı.\n\nLütfən Spring Boot aplikasiyanızı başladın və ngrok tunnel açın.');
             return false;
         }
     }
@@ -562,7 +575,7 @@
 
                     let errorMsg = 'WebSocket bağlantı xətası!\n\n';
                     errorMsg += 'Səbəblər:\n';
-                    errorMsg += '1. Backend /ws endpoint mövcud deyil\n';
+                    errorMsg += '1. Backend /websocket endpoint mövcud deyil\n';
                     errorMsg += '2. CORS konfiqurasiyası düzgün deyil\n';
                     errorMsg += '3. WebSocket konfiqurasiyası yoxdur\n';
                     errorMsg += '4. Token düzgün deyil\n\n';
@@ -617,7 +630,7 @@
             currentSubscription.unsubscribe();
         }
 
-        const topic = '/topic/chat-room.' + roomId;  // /topic/chat/ -> /topic/chat-room.
+        const topic = '/topic/chat-room.' + roomId;
         log('Subscribe olunur: ' + topic);
 
         try {
@@ -710,6 +723,12 @@
             return;
         }
 
+        if (!selectedRoom.id) {
+            alert('Otaq ID tapılmadı!');
+            log('❌ selectedRoom.id undefined: ' + JSON.stringify(selectedRoom));
+            return;
+        }
+
         if (!stompClient || !stompClient.connected) {
             alert('WebSocket bağlantısı yoxdur! "WebSocket Bağlan" düyməsinə basın.');
             log('Mesaj göndərmə xətası: WebSocket bağlı deyil');
@@ -722,10 +741,9 @@
                 'content-type': 'application/json'
             };
 
-            // Backend ChatMessageRequest - senderId istəyir (userId yox!)
             const payload = {
                 chatRoomId: selectedRoom.id,
-                senderId: currentUser.id,  // userId -> senderId
+                senderId: currentUser.id,
                 message: message
             };
 
@@ -736,68 +754,29 @@
             log('═══════════════════════════════════');
             log('Destination: ' + destination);
             log('ChatRoomId: ' + selectedRoom.id);
-            log('SenderId: ' + currentUser.id + ' (düzəldildi: userId -> senderId)');
+            log('SenderId: ' + currentUser.id);
             log('Message: "' + message + '"');
             log('JSON: ' + payloadStr);
             log('WebSocket Status: ' + (stompClient.connected ? 'CONNECTED ✓' : 'DISCONNECTED ✗'));
 
-            // STOMP send
+            if (!payload.chatRoomId) {
+                log('❌ XƏTA: chatRoomId undefined!');
+                alert('Xəta: Chat otağı ID tapılmadı!');
+                return;
+            }
+
             stompClient.send(destination, headers, payloadStr);
 
             log('✓ stompClient.send() çağırıldı');
             log('⏳ Backend cavabı gözlənilir...');
             log('═══════════════════════════════════');
 
-            // Input-u TƏMİZLƏMƏ (test üçün)
-            // input.value = '';
-            input.style.background = '#ffffcc'; // Sarı - göndərilir
-
-            // Fallback: 5 saniyə sonra yoxla
-            let wsReceived = false;
-            const checkTimeout = setTimeout(async function() {
-                if (!wsReceived) {
-                    log('═══════════════════════════════════');
-                    log('⚠️ PROBLEM: 5 SANİYƏ KEÇDƏ CAVAB GƏLMƏDİ!');
-                    log('═══════════════════════════════════');
-                    log('🔍 Backend yoxlanır...');
-
-                    await loadMessages(selectedRoom.id);
-
-                    if (messages.length === 0 || !messages.find(m => m.message === message)) {
-                        log('❌ BACKEND MESAJI ALMADI VƏ YA SAVE ETMƏDİ!');
-                        log('');
-                        log('YOXLAMA ADDMLARI:');
-                        log('1. Backend console-da log varmı?');
-                        log('2. ChatWSController.sendMessage() çağırılırmı?');
-                        log('3. WebSocketConfig düzgündürmü?');
-                        log('');
-                        alert('❌ XƏTA: Mesaj backend-ə çatmadı!\n\nBackend console log-larını yoxlayın:\n- WEBSOCKET MESSAGE RECEIVED log-u görünürmü?\n- Xəta mesajları varmı?');
-                        input.style.background = '#ffcccc'; // Qırmızı - xəta
-                    } else {
-                        log('✓ Mesaj database-də tapıldı amma WebSocket işləmədi');
-                        log('⚠️ WebSocket broadcast problemi var!');
-                        input.style.background = '#ccffcc'; // Yaşıl - uğurlu (REST ilə)
-                        input.value = ''; // İndi təmizlə
-                    }
-                } else {
-                    input.style.background = 'white';
-                    input.value = '';
-                }
-            }, 5000);
-
-            window._lastMessageTimeout = checkTimeout;
-            window._lastMessageReceived = function() {
-                wsReceived = true;
-                clearTimeout(checkTimeout);
-                input.style.background = 'white';
-                input.value = '';
-            };
+            input.value = '';
 
         } catch (err) {
             log('✗ Exception: ' + err.message);
             console.error('Mesaj göndərmə xətası:', err);
             alert('JavaScript xətası: ' + err.message);
-            input.style.background = '#ffcccc';
         }
     }
 
@@ -828,8 +807,15 @@
     }
 
     function selectRoom(room) {
+        if (!room || !room.id) {
+            log('❌ Invalid room object: ' + JSON.stringify(room));
+            alert('Otaq məlumatı düzgün deyil!');
+            return;
+        }
+
         log('Otaq seçildi: #' + room.id);
         selectedRoom = room;
+
         renderRooms();
         loadMessages(room.id);
         renderChatPanel();
@@ -852,6 +838,12 @@
         let html = '';
         for (let i = 0; i < chatRooms.length; i++) {
             const room = chatRooms[i];
+
+            if (!room.id) {
+                log('❌ Room ID yoxdur: ' + JSON.stringify(room));
+                continue;
+            }
+
             const isActive = selectedRoom && selectedRoom.id === room.id;
             html += '<div class="room-item ' + (isActive ? 'active' : '') + '" onclick="selectRoomById(' + room.id + ')">';
             html += '<strong>Otaq #' + room.id + '</strong>';
@@ -902,6 +894,8 @@
     }
 
     log('Interface yükləndi');
+    log('API URL: ' + API_URL);
+    log('WS URL: ' + WS_URL);
 </script>
 </body>
 </html>
