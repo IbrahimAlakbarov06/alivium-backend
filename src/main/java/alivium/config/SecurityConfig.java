@@ -132,6 +132,11 @@ public class SecurityConfig {
                                 "/api/voucher/code"
                         ).permitAll()
 
+                        // STRIPE WEBHOOK (Public - authenticated via signature verification)
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/payments/webhook"
+                        ).permitAll()
+
                         // SWAGGER/API DOCS (Public)
                         .requestMatchers(
                                 "/v3/api-docs/**",

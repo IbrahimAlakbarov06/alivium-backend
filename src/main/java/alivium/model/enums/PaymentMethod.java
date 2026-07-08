@@ -1,5 +1,6 @@
 package alivium.model.enums;
 
 public enum PaymentMethod {
-    CASH
+    CASH,
+    CARD
 }

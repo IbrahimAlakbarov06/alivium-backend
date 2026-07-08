@@ -66,7 +66,7 @@ public class OrderServiceImpl implements OrderService {
 
         calculateTotal(order);
 
-        // addPayment(order, request)
+        addPayment(order, request);
 
         Order savedOrder = orderRepository.save(order);
 
@@ -393,6 +393,22 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(total);
     }
 
+
+    private void addPayment(Order order, CreateOrderRequest request) {
+        Payment payment = Payment.builder()
+                .paymentMethod(request.getPaymentMethod())
+                .status(PaymentStatus.PENDING)
+                .amount(order.getTotalAmount())
+                .build();
+
+        order.setPayment(payment);
+
+        // CASH orders are confirmed immediately; CARD orders stay PENDING
+        // until the Stripe webhook reports payment_intent.succeeded
+        if (request.getPaymentMethod() == PaymentMethod.CASH) {
+            order.setStatus(OrderStatus.CONFIRMED);
+        }
+    }
 
     private void reduceStock(Cart cart) {
         for (CartItem item : cart.getCartItems()) {

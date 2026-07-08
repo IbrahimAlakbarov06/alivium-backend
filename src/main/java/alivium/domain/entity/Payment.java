@@ -5,6 +5,8 @@ import alivium.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @Setter
@@ -28,4 +30,13 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal amount;
+
+    @Column(unique = true)
+    private String stripePaymentIntentId;
+
+    @Column(length = 500)
+    private String failureReason;
 }

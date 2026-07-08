@@ -1,7 +1,5 @@
 package alivium.model.dto.response;
 
-import alivium.model.enums.PaymentMethod;
-import alivium.model.enums.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,13 +11,12 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentResponse {
-    private Long id;
+public class PaymentIntentResponse {
     private Long orderId;
     private String orderNumber;
-    private PaymentMethod paymentMethod;
-    private PaymentStatus status;
+    private String paymentIntentId;
+    private String clientSecret;
+    private String publishableKey;
     private BigDecimal amount;
-    private String stripePaymentIntentId;
-    private String failureReason;
+    private String currency;
 }
