@@ -37,7 +37,7 @@ public class Order {
     @Builder.Default
     private Set<OrderItem> orderItems=new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name="billing_address_id")
     private Address billingAddress;
 

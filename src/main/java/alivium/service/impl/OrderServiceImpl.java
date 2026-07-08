@@ -441,6 +441,9 @@ public class OrderServiceImpl implements OrderService {
 
     private void clearCart(Cart cart) {
         cartItemRepository.deleteByCartId(cart.getId());
+        // the managed Cart still references the deleted items; without this the
+        // CascadeType.ALL collection re-persists them on flush
+        cart.getCartItems().clear();
     }
 
 

@@ -17,9 +17,11 @@ import alivium.model.enums.PaymentMethod;
 import alivium.model.enums.PaymentStatus;
 import alivium.service.NotificationTemplateService;
 import alivium.service.PaymentService;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
+import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.net.Webhook;
@@ -209,10 +211,22 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentIntent extractPaymentIntent(Event event) {
-        StripeObject stripeObject = event.getDataObjectDeserializer().getObject().orElse(null);
+        EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+
+        StripeObject stripeObject = deserializer.getObject().orElse(null);
+        if (stripeObject == null) {
+            // getObject() is empty when the event's API version differs from the
+            // SDK's pinned version; fall back to lenient deserialization since we
+            // only read id, metadata and lastPaymentError from the intent
+            try {
+                stripeObject = deserializer.deserializeUnsafe();
+            } catch (EventDataObjectDeserializationException e) {
+                throw new BusinessException("Unable to deserialize Stripe event data for event: " + event.getId());
+            }
+        }
 
         if (!(stripeObject instanceof PaymentIntent)) {
-            throw new BusinessException("Unable to deserialize Stripe event data for event: " + event.getId());
+            throw new BusinessException("Unexpected Stripe event data type for event: " + event.getId());
         }
 
         return (PaymentIntent) stripeObject;
